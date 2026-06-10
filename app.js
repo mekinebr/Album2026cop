@@ -24,12 +24,60 @@ function extractFromText(t){const up=normalizeOcrText(t);const variants=[up,up.r
 function cropCodeOnly(src){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const ctx=c.getContext('2d');ctx.drawImage(src,0,0);const guide={x:.26,y:.35,w:.48,h:.30};const sx=Math.floor(src.width*guide.x),sy=Math.floor(src.height*guide.y),sw=Math.floor(src.width*guide.w),sh=Math.floor(src.height*guide.h);const out=document.createElement('canvas');out.width=sw*4;out.height=sh*4;const o=out.getContext('2d');o.imageSmoothingEnabled=false;o.drawImage(src,sx,sy,sw,sh,0,0,out.width,out.height);const img=o.getImageData(0,0,out.width,out.height),d=img.data;for(let i=0;i<d.length;i+=4){let g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;g=Math.max(0,Math.min(255,(g-110)*1.6+135));d[i]=d[i+1]=d[i+2]=g}o.putImageData(img,0,0);return out}
 async function ocr(canvas){if(!window.Tesseract)throw new Error('OCR não carregou');const r=await Tesseract.recognize(canvas,'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',tessedit_pageseg_mode:'7'});return r?.data?.text||''}
 async function analyzeCanvas(canvas){const codeCanvas=cropCodeOnly(canvas);const text=await ocr(codeCanvas);return extractFromText(text)}
+
+function enhanceCodePhoto(sourceCanvas){
+  const src=sourceCanvas;
+  const out=document.createElement('canvas');
+  out.width=src.width;
+  out.height=src.height;
+  const ctx=out.getContext('2d');
+  ctx.drawImage(src,0,0);
+
+  const img=ctx.getImageData(0,0,out.width,out.height);
+  const d=img.data;
+
+  // auto contraste seguro: não deixa tudo branco
+  let min=255,max=0;
+  for(let i=0;i<d.length;i+=4){
+    const g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
+    min=Math.min(min,g); max=Math.max(max,g);
+  }
+  const range=Math.max(30,max-min);
+
+  for(let i=0;i<d.length;i+=4){
+    let g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
+    g=(g-min)*255/range;
+    g=(g-115)*1.35+135; // contraste leve
+    g=Math.max(20,Math.min(235,g)); // trava para não estourar branco/preto
+    d[i]=d[i+1]=d[i+2]=g;
+  }
+  ctx.putImageData(img,0,0);
+
+  // nitidez leve
+  const sharp=document.createElement('canvas');
+  sharp.width=out.width; sharp.height=out.height;
+  const sctx=sharp.getContext('2d');
+  sctx.filter='contrast(1.15) brightness(1.04)';
+  sctx.drawImage(out,0,0);
+  sctx.filter='none';
+  return sharp;
+}
+
+function showEnhancedPreview(canvas){
+  const p=document.getElementById('enhancedPreview');
+  if(!p)return;
+  p.className='enhanced-preview';
+  p.width=canvas.width;
+  p.height=canvas.height;
+  p.getContext('2d').drawImage(canvas,0,0);
+}
+
 function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=1400,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
 function showFound(item){$('#quickCode').value=`${item.teamCode} ${item.number}`;renderQuick(item);$('#scannerStatus').textContent=`Encontrado: ${item.teamCode} ${item.number} • ${item.name}`;scrollTo({top:$('#quickResult').offsetTop-20,behavior:'smooth'})}
 async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();$('#scannerStatus').textContent='Leitor ligado. Coloque somente a etiqueta no quadro.';scannerLoopTimer=setInterval(scanFrame,1800)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
 function stopScanner(){if(scannerLoopTimer)clearInterval(scannerLoopTimer);scannerLoopTimer=null;if(scannerStream)scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;$('#scannerVideo').srcObject=null;$('#scannerStatus').textContent='Leitor fechado.'}
 async function scanFrame(){if(isScanning||!scannerStream)return;isScanning=true;const v=$('#scannerVideo'),c=$('#scannerCanvas');c.width=v.videoWidth||1280;c.height=v.videoHeight||720;c.getContext('2d').drawImage(v,0,0,c.width,c.height);try{const item=await analyzeCanvas(c);if(item){stopScanner();showFound(item)}}catch(e){}isScanning=false}
-async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto do código...';try{const c=await imageFileToCanvas(file);const item=await analyzeCanvas(c);if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Envie foto só da etiqueta.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
+async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Melhorando foto do código e lendo...';try{const c=await imageFileToCanvas(file);const improved=enhanceCodePhoto(c);showEnhancedPreview(improved);const item=await analyzeCanvas(improved);if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mais perto, reta e somente da etiqueta.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
 function renderDashboard(){const c=counts(),p=pct(c.have,c.total);$('#haveCount').textContent=c.have;$('#repeatCount').textContent=c.repeat;$('#missingCount').textContent=c.missing;$('#totalCount').textContent=c.total;$('#homeRepeatCount').textContent=c.repeat;$('#homeMissingCount').textContent=c.missing;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.have} de ${c.total} figurinhas marcadas como tenho`}
 function openView(n){$$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===n));$$('.view').forEach(v=>v.classList.remove('active'));$('#'+n).classList.add('active');if(n==='album')renderCards();if(n==='trades')renderTrades();scrollTo({top:0,behavior:'smooth'})}
 function selectGroup(g){activeGroup=g;activeTeam='';$('#search').value='';renderGroupSelector();renderTeamSelector();openView('home')}
