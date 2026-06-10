@@ -4,35 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=scanner-preciso" />
+  <link rel="stylesheet" href="./style.css?v=scanner-digitalizador" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div>
-        <span class="eyebrow">Controle de figurinhas por código</span>
-        <h1>🏆 Álbum Copa 2026</h1>
-      </div>
+      <div><span class="eyebrow">Controle de figurinhas por código</span><h1>🏆 Álbum Copa 2026</h1></div>
       <button id="themeBtn" class="icon-btn" aria-label="Alternar tema">🌙</button>
     </header>
 
     <section id="home" class="view active">
-      <section class="install-card" id="installCard">
-        <div>
-          <b>📲 Usar como aplicativo</b>
-          <p>Instale no celular para abrir direto pela tela inicial.</p>
-        </div>
-        <button id="installBtn">Instalar</button>
-      </section>
+      <section class="install-card" id="installCard"><div><b>📲 Usar como aplicativo</b><p>Instale no celular para abrir direto pela tela inicial.</p></div><button id="installBtn">Instalar</button></section>
 
       <section class="dashboard">
-        <div class="progress-card">
-          <div class="card-title">Progresso geral</div>
-          <strong id="percent">0%</strong>
-          <div class="progress"><i id="barFill"></i></div>
-          <p id="progressText">0 de 980 figurinhas marcadas como tenho</p>
-        </div>
+        <div class="progress-card"><div class="card-title">Progresso geral</div><strong id="percent">0%</strong><div class="progress"><i id="barFill"></i></div><p id="progressText">0 de 980 figurinhas marcadas como tenho</p></div>
         <button class="stat have" data-open-view="album"><span>✅</span><b id="haveCount">0</b><small>Tenho</small></button>
         <button class="stat missing" data-open-view="trades"><span>❌</span><b id="missingCount">0</b><small>Faltam</small></button>
         <button class="stat repeat" data-open-view="trades"><span>🔁</span><b id="repeatCount">0</b><small>Repetidas</small></button>
@@ -40,114 +26,52 @@
       </section>
 
       <section class="quick-panel">
-        <div class="section-head">
-          <div>
-            <h2>Busca rápida</h2>
-            <p>Digite BRA-07, CAN 15, ARG, Brasil ou Grupo C.</p>
-          </div>
-        </div>
-        <div class="quick-row">
-          <input id="quickCode" placeholder="Buscar figurinha, seleção ou grupo" />
-          <button id="findBtn">Buscar</button>
-        </div>
+        <div class="section-head"><div><h2>Busca rápida</h2><p>Digite BRA-07, CAN 15, ARG, Brasil ou Grupo C.</p></div></div>
+        <div class="quick-row"><input id="quickCode" placeholder="Buscar figurinha, seleção ou grupo" /><button id="findBtn">Buscar</button></div>
         <div id="quickResult"></div>
       </section>
 
       <section class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>📷 Scanner de código</h2>
-            <p>Aponte para o canto onde aparece o código, exemplo: CAN 15.</p>
-          </div>
-        </div>
+        <div class="section-head"><div><h2>📷 Scanner digitalizador</h2><p>Enquadre a figurinha inteira. O app tenta localizar o código, melhorar a imagem e ler automaticamente.</p></div></div>
         <div class="scanner-box">
           <div class="video-wrap">
             <video id="scannerVideo" playsinline muted></video>
-            <div class="scan-guide">Código aqui</div>
+            <div class="scan-card-guide"><span>Enquadre a figurinha aqui</span></div>
+            <div class="scan-code-guide">Código</div>
           </div>
           <canvas id="scannerCanvas" class="hidden"></canvas>
-          <div id="scannerStatus" class="scanner-status">Aponte para o código tipo CAN 15, BRA 07 ou ARG 03.</div>
+          <canvas id="previewCanvas" class="preview-canvas"></canvas>
+          <div id="scannerStatus" class="scanner-status">Aponte para a figurinha inteira ou envie uma foto nítida.</div>
           <div class="scanner-actions">
             <button id="startScannerBtn">Abrir câmera</button>
-            <button id="scanFrameBtn" class="ghost">Ler código</button>
+            <button id="scanFrameBtn" class="ghost">Digitalizar e ler</button>
+            <label class="file-btn">📸 Enviar foto<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
             <button id="stopScannerBtn" class="ghost">Fechar</button>
           </div>
         </div>
       </section>
 
-      <section class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Escolha por grupo</h2>
-            <p>Toque no grupo, escolha a seleção e marque os números.</p>
-          </div>
-        </div>
-        <div id="groupSelector" class="group-selector"></div>
-        <div id="teamSelector" class="team-selector"></div>
-      </section>
-
-      <section class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Resumo por seleção</h2>
-            <p>Veja onde faltam figurinhas.</p>
-          </div>
-        </div>
-        <div id="teamProgress" class="team-progress"></div>
-      </section>
+      <section class="section-card"><div class="section-head"><div><h2>Escolha por grupo</h2><p>Toque no grupo, escolha a seleção e marque os números.</p></div></div><div id="groupSelector" class="group-selector"></div><div id="teamSelector" class="team-selector"></div></section>
+      <section class="section-card"><div class="section-head"><div><h2>Resumo por seleção</h2><p>Veja onde faltam figurinhas.</p></div></div><div id="teamProgress" class="team-progress"></div></section>
     </section>
 
     <section id="album" class="view">
       <div class="sticky-tools">
-        <div class="section-head compact-head">
-          <div>
-            <h2 id="albumTitle">Figurinhas</h2>
-            <p id="albumSubtitle">Selecione um grupo ou use a busca.</p>
-          </div>
-          <button id="clearSelectionBtn" class="ghost">Limpar</button>
-        </div>
-        <div class="search-row">
-          <input id="search" placeholder="Buscar por BRA-01, CAN 15, Brasil, Grupo C..." />
-          <select id="statusFilter">
-            <option value="all">Todos</option>
-            <option value="none">Não marcado</option>
-            <option value="have">Tenho</option>
-            <option value="missing">Faltam</option>
-            <option value="repeat">Repetidas</option>
-          </select>
-        </div>
+        <div class="section-head compact-head"><div><h2 id="albumTitle">Figurinhas</h2><p id="albumSubtitle">Selecione um grupo ou use a busca.</p></div><button id="clearSelectionBtn" class="ghost">Limpar</button></div>
+        <div class="search-row"><input id="search" placeholder="Buscar por BRA-01, CAN 15, Brasil, Grupo C..." /><select id="statusFilter"><option value="all">Todos</option><option value="none">Não marcado</option><option value="have">Tenho</option><option value="missing">Faltam</option><option value="repeat">Repetidas</option></select></div>
         <div id="activeFilters" class="active-filters"></div>
       </div>
       <div id="cards" class="cards"></div>
     </section>
 
     <section id="trades" class="view">
-      <section class="section-card trade-hero">
-        <h2>🤝 Trocas</h2>
-        <p>Lista automática para enviar no WhatsApp.</p>
-        <div class="trade-stats">
-          <div><b id="homeRepeatCount">0</b><span>tenho repetidas</span></div>
-          <div><b id="homeMissingCount">0</b><span>faltam</span></div>
-        </div>
-        <div class="trade-actions">
-          <button id="shareBtn">📲 WhatsApp</button>
-          <button id="copyBtn" class="ghost">Copiar</button>
-        </div>
-      </section>
-      <div class="trade-grid">
-        <label>🔁 Tenho repetidas<textarea id="repeatList" readonly></textarea></label>
-        <label>❌ Preciso<textarea id="missingList" readonly></textarea></label>
-      </div>
+      <section class="section-card trade-hero"><h2>🤝 Trocas</h2><p>Lista automática para enviar no WhatsApp.</p><div class="trade-stats"><div><b id="homeRepeatCount">0</b><span>tenho repetidas</span></div><div><b id="homeMissingCount">0</b><span>faltam</span></div></div><div class="trade-actions"><button id="shareBtn">📲 WhatsApp</button><button id="copyBtn" class="ghost">Copiar</button></div></section>
+      <div class="trade-grid"><label>🔁 Tenho repetidas<textarea id="repeatList" readonly></textarea></label><label>❌ Preciso<textarea id="missingList" readonly></textarea></label></div>
     </section>
   </main>
 
-  <nav class="bottom-nav">
-    <button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button>
-    <button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button>
-    <button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button>
-  </nav>
-
+  <nav class="bottom-nav"><button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button><button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button><button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button></nav>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=scanner-preciso"></script>
+  <script src="./app.js?v=scanner-digitalizador"></script>
 </body>
 </html>
