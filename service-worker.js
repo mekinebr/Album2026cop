@@ -1,4 +1,4 @@
-const CACHE = 'album-copa2026-compacto-menu-v2';
+const CACHE = 'album-copa2026-scanner-install-v1';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
