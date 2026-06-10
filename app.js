@@ -61,23 +61,26 @@ function extractStickerCode(text){
   return candidates[0] || '';
 }
 
-function crop(src,r,scale=3){
+function crop(src,r,scale=6){
   const c=document.createElement('canvas');
   const sx=Math.max(0,Math.floor(src.width*r.x));
   const sy=Math.max(0,Math.floor(src.height*r.y));
   const sw=Math.min(src.width-sx,Math.floor(src.width*r.w));
   const sh=Math.min(src.height-sy,Math.floor(src.height*r.h));
+
   c.width=Math.max(1,sw*scale);
   c.height=Math.max(1,sh*scale);
   const ctx=c.getContext('2d');
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(src,sx,sy,sw,sh,0,0,c.width,c.height);
 
-  // contraste leve, não estoura para branco
+  // processamento específico para etiqueta: texto claro/escuro em cápsula cinza
   const img=ctx.getImageData(0,0,c.width,c.height),d=img.data;
   for(let i=0;i<d.length;i+=4){
     let gray=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-    gray=Math.max(0,Math.min(255,(gray-115)*1.45+135));
+    // contraste sem estourar a imagem
+    gray=(gray-105)*1.8+135;
+    gray=Math.max(0,Math.min(255,gray));
     d[i]=d[i+1]=d[i+2]=gray;
   }
   ctx.putImageData(img,0,0);
@@ -85,22 +88,32 @@ function crop(src,r,scale=3){
 }
 
 function buildScanCanvases(src){
-  // poucas tentativas para ser rápido e não travar
+  // O código do verso fica na etiqueta do topo direito.
+  // Essas regiões focam APENAS na etiqueta, evitando OCR no restante da figurinha.
   const regions=[
-    {x:.48,y:0,w:.50,h:.23},   // código superior direito
-    {x:.38,y:0,w:.60,h:.28},   // topo direito aberto
-    {x:0,y:0,w:1,h:.28},       // faixa superior
-    {x:.52,y:0,w:.48,h:.42}    // lateral direita
+    {x:.54,y:.02,w:.42,h:.16}, // etiqueta padrão: SUI 1 / CAN 15
+    {x:.48,y:.00,w:.50,h:.20}, // um pouco mais aberto
+    {x:.58,y:.03,w:.38,h:.14}, // mais fechado na cápsula
+    {x:.50,y:.00,w:.48,h:.25}, // fallback top-right
+    {x:.36,y:.00,w:.62,h:.22}  // se a foto estiver torta
   ];
-  return regions.map(r=>crop(src,r,4));
+
+  const arr=[];
+  regions.forEach(r=>{
+    arr.push(crop(src,r,7));
+  });
+  return arr;
 }
 
 async function runOcrOnCanvas(canvas){
   if(!window.Tesseract) throw new Error('OCR não carregou');
+
+  // Tenta tratar a etiqueta como uma única linha curta
   const r=await Tesseract.recognize(canvas,'eng',{
     tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',
     tessedit_pageseg_mode:'7'
   });
+
   return r?.data?.text||'';
 }
 
@@ -196,8 +209,8 @@ async function toggleFlash(){
   }
 }
 function stopScanner(){if(scannerStream)scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;$('#scannerVideo').srcObject=null;$('#scannerStatus').textContent='Scanner fechado.'}
-async function scanFrame(){const video=$('#scannerVideo'),canvas=$('#scannerCanvas'),status=$('#scannerStatus');if(!video.srcObject){status.textContent='Abra a câmera primeiro.';return}status.textContent='Lendo código... mantenha a imagem parada.';canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);try{const {code}=await analyzeCanvasForCode(canvas);if(code)openFoundCode(code);else status.textContent='Não consegui ler. Aproxime do código e tente novamente, ou digite manualmente.'}catch(e){status.textContent='Erro na leitura. Tente mais luz e câmera firme.'}}
-async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto enviada...';try{const canvas=await imageFileToCanvas(file);const {code}=await analyzeCanvasForCode(canvas);if(code)openFoundCode(code);else $('#scannerStatus').textContent='Não encontrei código. Tire foto mais perto do canto do código ou digite manualmente.'}catch(err){$('#scannerStatus').textContent='Não consegui analisar essa foto.'}finally{e.target.value=''}}
+async function scanFrame(){const video=$('#scannerVideo'),canvas=$('#scannerCanvas'),status=$('#scannerStatus');if(!video.srcObject){status.textContent='Abra a câmera primeiro.';return}status.textContent='Lendo somente a etiqueta do código...';canvas.width=video.videoWidth||1280;canvas.height=video.videoHeight||720;canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);try{const {code}=await analyzeCanvasForCode(canvas);if(code)openFoundCode(code);else status.textContent='Não consegui ler. Aproxime da etiqueta do código e tente novamente, ou digite manualmente.'}catch(e){status.textContent='Erro na leitura. Tente mais luz e câmera firme.'}}
+async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto enviada...';try{const canvas=await imageFileToCanvas(file);const {code}=await analyzeCanvasForCode(canvas);if(code)openFoundCode(code);else $('#scannerStatus').textContent='Não encontrei código. Tire foto somente da etiqueta do código ou digite manualmente.'}catch(err){$('#scannerStatus').textContent='Não consegui analisar essa foto.'}finally{e.target.value=''}}
 function setupInstall(){const btn=$('#installBtn');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});btn.addEventListener('click',async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null}else alert('No Android: Chrome → 3 pontinhos → Instalar aplicativo ou Adicionar à tela inicial.')})}
 function renderAll(){renderDashboard();renderGroupSelector();renderTeamSelector();renderTeamProgress();renderCards();renderTrades()}
 $$('.bottom-nav button').forEach(btn=>btn.addEventListener('click',()=>openView(btn.dataset.view)));$$('[data-open-view]').forEach(btn=>btn.addEventListener('click',()=>openView(btn.dataset.openView)));$('#findBtn').addEventListener('click',()=>renderQuick(findSticker($('#quickCode').value)));$('#quickCode').addEventListener('input',e=>{if(e.target.value.trim().length>=2)renderQuick(findSticker(e.target.value))});$('#quickCode').addEventListener('keydown',e=>{if(e.key==='Enter')renderQuick(findSticker(e.target.value))});$('#search').addEventListener('input',renderCards);$('#statusFilter').addEventListener('change',renderCards);$('#clearSelectionBtn').addEventListener('click',clearSelection);$('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('dark');localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙'});$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';$('#shareBtn').addEventListener('click',shareTrades);$('#copyBtn').addEventListener('click',copyTrades);$('#startScannerBtn').addEventListener('click',startScanner);$('#scanFrameBtn').addEventListener('click',scanFrame);$('#flashBtn').addEventListener('click',toggleFlash);$('#stopScannerBtn').addEventListener('click',stopScanner);$('#photoInput').addEventListener('change',handlePhotoUpload);setupInstall();if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});renderAll();
