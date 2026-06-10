@@ -15,55 +15,114 @@ function statusLabel(s){return{have:'Tenho',missing:'Falta',repeat:'Repetida',no
 function statusEmoji(s){return{have:'✅',missing:'❌',repeat:'🔁',none:'⭕'}[s]}
 function counts(list=stickers){return{have:list.filter(x=>getStatus(x.id)==='have').length,repeat:list.filter(x=>getStatus(x.id)==='repeat').length,missing:list.filter(x=>getStatus(x.id)==='missing').length,none:list.filter(x=>getStatus(x.id)==='none').length,total:list.length}}
 function pct(h,t){return t?Math.round(h/t*100):0}
-function cleanSigla(s){s=String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const m={'C4N':'CAN','CAH':'CAN','CAM':'CAN','8RA':'BRA','BR4':'BRA','AR6':'ARG','4RG':'ARG','P0R':'POR','US4':'USA','U5A':'USA','K0R':'KOR','C0D':'COD','5UI':'SUI','SU1':'SUI'};if(m[s])return m[s];s=s.replace(/4/g,'A').replace(/8/g,'B').replace(/6/g,'G').replace(/5/g,'S').replace(/0/g,'O');return VALID_CODES.includes(s)?s:''}
-function parseCode(q){const raw=String(q||'').toUpperCase().replace(/[^A-Z0-9]/g,'');const m=raw.match(/^([A-Z0-9]{3})([0-9OIL]{1,2})$/);if(!m)return null;const sig=cleanSigla(m[1]);const num=parseInt(String(m[2]).replace(/O/g,'0').replace(/[IL]/g,'1'),10);if(!sig||!num)return null;return stickers.find(x=>x.teamCode===sig&&Number(x.number)===num)||null}
+function cleanSigla(s){
+  s=String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+  // Correções somente quando são muito seguras.
+  const safe={
+    'C4N':'CAN','CAH':'CAN',
+    '8RA':'BRA','BR4':'BRA',
+    'AR6':'ARG','4RG':'ARG',
+    'P0R':'POR',
+    'US4':'USA','U5A':'USA',
+    'K5A':'KSA','KSA':'KSA',
+    '5UI':'SUI','SU1':'SUI',
+    'C0D':'COD',
+    'K0R':'KOR'
+  };
+  if(safe[s]) return safe[s];
+
+  // Não força uma sigla para outra se não tiver certeza.
+  s=s.replace(/4/g,'A').replace(/8/g,'B').replace(/5/g,'S').replace(/0/g,'O');
+  return VALID_CODES.includes(s)?s:'';
+}
+
+function parseCode(q){
+  const raw=String(q||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const m=raw.match(/^([A-Z0-9]{3})([0-9OIL]{1,2})$/);
+  if(!m)return null;
+
+  const sig=cleanSigla(m[1]);
+  const num=parseInt(String(m[2]).replace(/O/g,'0').replace(/[IL]/g,'1'),10);
+
+  if(!sig || !Number.isFinite(num))return null;
+
+  // Busca real: sigla + número. Não usa id com zero à esquerda.
+  return stickers.find(x=>x.teamCode===sig && Number(x.number)===num) || null;
+}
+
 function findSticker(q){return parseCode(q)||stickers.find(x=>norm(x.name).includes(norm(q))||norm(x.team).includes(norm(q))||norm(x.group).includes(norm(q)))||null}
 function matchesText(x,q){q=String(q||'').trim();if(!q)return true;return !!parseCode(q)&&parseCode(q).id===x.id||norm(x.name).includes(norm(q))||norm(x.team).includes(norm(q))||norm(x.teamCode).includes(norm(q))||norm(x.group).includes(norm(q))}
 function normalizeOcrText(t){return String(t||'').toUpperCase().replace(/[|!]/g,'I').replace(/[€¢]/g,'C').replace(/[^A-Z0-9\-\s]/g,' ').replace(/\s+/g,' ').trim()}
 function extractFromText(t){const up=normalizeOcrText(t);const variants=[up,up.replace(/\s+/g,''),up.replace(/O(?=\d)/g,'0').replace(/[IL](?=\d)/g,'1'),up.replace(/\s+/g,'').replace(/O(?=\d)/g,'0').replace(/[IL](?=\d)/g,'1')];for(const v of variants){const re=/([A-Z0-9]{3})\s*[-]?\s*([0-9OIL]{1,2})/g;let m;while((m=re.exec(v))){const item=parseCode(m[1]+m[2]);if(item)return item}}return null}
-function cropCodeOnly(src){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const ctx=c.getContext('2d');ctx.drawImage(src,0,0);const guide={x:.26,y:.35,w:.48,h:.30};const sx=Math.floor(src.width*guide.x),sy=Math.floor(src.height*guide.y),sw=Math.floor(src.width*guide.w),sh=Math.floor(src.height*guide.h);const out=document.createElement('canvas');out.width=sw*4;out.height=sh*4;const o=out.getContext('2d');o.imageSmoothingEnabled=false;o.drawImage(src,sx,sy,sw,sh,0,0,out.width,out.height);const img=o.getImageData(0,0,out.width,out.height),d=img.data;for(let i=0;i<d.length;i+=4){let g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;g=Math.max(0,Math.min(255,(g-110)*1.6+135));d[i]=d[i+1]=d[i+2]=g}o.putImageData(img,0,0);return out}
-async function ocr(canvas){if(!window.Tesseract)throw new Error('OCR não carregou');const r=await Tesseract.recognize(canvas,'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',tessedit_pageseg_mode:'7'});return r?.data?.text||''}
-async function analyzeCanvas(canvas){const codeCanvas=cropCodeOnly(canvas);const text=await ocr(codeCanvas);return extractFromText(text)}
-
-function enhanceCodePhoto(sourceCanvas){
-  const src=sourceCanvas;
+function makeCrop(src, r, scale=4){
   const out=document.createElement('canvas');
-  out.width=src.width;
-  out.height=src.height;
-  const ctx=out.getContext('2d');
-  ctx.drawImage(src,0,0);
+  const sx=Math.max(0,Math.floor(src.width*r.x));
+  const sy=Math.max(0,Math.floor(src.height*r.y));
+  const sw=Math.min(src.width-sx,Math.floor(src.width*r.w));
+  const sh=Math.min(src.height-sy,Math.floor(src.height*r.h));
 
-  const img=ctx.getImageData(0,0,out.width,out.height);
-  const d=img.data;
+  out.width=Math.max(1,sw*scale);
+  out.height=Math.max(1,sh*scale);
 
-  // auto contraste seguro: não deixa tudo branco
-  let min=255,max=0;
-  for(let i=0;i<d.length;i+=4){
-    const g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-    min=Math.min(min,g); max=Math.max(max,g);
-  }
-  const range=Math.max(30,max-min);
+  const o=out.getContext('2d');
+  o.imageSmoothingEnabled=false;
+  o.drawImage(src,sx,sy,sw,sh,0,0,out.width,out.height);
 
+  const img=o.getImageData(0,0,out.width,out.height),d=img.data;
   for(let i=0;i<d.length;i+=4){
     let g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-    g=(g-min)*255/range;
-    g=(g-115)*1.35+135; // contraste leve
-    g=Math.max(20,Math.min(235,g)); // trava para não estourar branco/preto
+    // contraste seguro: melhora sem estourar
+    g=Math.max(15,Math.min(240,(g-110)*1.55+135));
     d[i]=d[i+1]=d[i+2]=g;
   }
-  ctx.putImageData(img,0,0);
-
-  // nitidez leve
-  const sharp=document.createElement('canvas');
-  sharp.width=out.width; sharp.height=out.height;
-  const sctx=sharp.getContext('2d');
-  sctx.filter='contrast(1.15) brightness(1.04)';
-  sctx.drawImage(out,0,0);
-  sctx.filter='none';
-  return sharp;
+  o.putImageData(img,0,0);
+  return out;
 }
 
-function showEnhancedPreview(canvas){
+// Para câmera: lê só o quadro central.
+// Para foto enviada: procura a etiqueta no topo direito da figurinha.
+function buildCodeCrops(src, mode='camera'){
+  const cameraRegions=[
+    {x:.18,y:.34,w:.64,h:.28}
+  ];
+
+  const photoRegions=[
+    {x:.50,y:.02,w:.46,h:.18}, // etiqueta padrão no topo direito
+    {x:.44,y:.00,w:.54,h:.22}, // um pouco mais aberto
+    {x:.56,y:.03,w:.38,h:.16}, // mais fechado
+    {x:.35,y:.00,w:.63,h:.25}, // foto torta/mais aberta
+    {x:.00,y:.00,w:1.00,h:.28} // faixa superior fallback
+  ];
+
+  const regions = mode==='photo' ? photoRegions : cameraRegions;
+  const crops=[];
+  regions.forEach(r=>{
+    crops.push(makeCrop(src,r,4));
+    crops.push(makeCrop(src,r,6));
+  });
+  return crops;
+}
+
+async function ocr(canvas){if(!window.Tesseract)throw new Error('OCR não carregou');const r=await Tesseract.recognize(canvas,'eng',{tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',tessedit_pageseg_mode:'7'});return r?.data?.text||''}
+async function analyzeCanvas(canvas, mode='camera'){
+  const crops=buildCodeCrops(canvas, mode);
+  let allText='';
+
+  for(const c of crops){
+    const text=await ocr(c);
+    allText+=' '+text;
+    const item=extractFromText(allText);
+
+    // Só aceita se achou na base por SIGLA + NÚMERO.
+    if(item) return item;
+  }
+
+  return null;
+}
+
+
+function showPhotoPreview(canvas){
   const p=document.getElementById('enhancedPreview');
   if(!p)return;
   p.className='enhanced-preview';
@@ -74,10 +133,10 @@ function showEnhancedPreview(canvas){
 
 function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=1400,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
 function showFound(item){$('#quickCode').value=`${item.teamCode} ${item.number}`;renderQuick(item);$('#scannerStatus').textContent=`Encontrado: ${item.teamCode} ${item.number} • ${item.name}`;scrollTo({top:$('#quickResult').offsetTop-20,behavior:'smooth'})}
-async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();$('#scannerStatus').textContent='Leitor ligado. Coloque somente a etiqueta no quadro.';scannerLoopTimer=setInterval(scanFrame,1800)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
+async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();$('#scannerStatus').textContent='Leitor ligado. Aproxime e coloque só a etiqueta no quadro.';scannerLoopTimer=setInterval(scanFrame,1300)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
 function stopScanner(){if(scannerLoopTimer)clearInterval(scannerLoopTimer);scannerLoopTimer=null;if(scannerStream)scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;$('#scannerVideo').srcObject=null;$('#scannerStatus').textContent='Leitor fechado.'}
-async function scanFrame(){if(isScanning||!scannerStream)return;isScanning=true;const v=$('#scannerVideo'),c=$('#scannerCanvas');c.width=v.videoWidth||1280;c.height=v.videoHeight||720;c.getContext('2d').drawImage(v,0,0,c.width,c.height);try{const item=await analyzeCanvas(c);if(item){stopScanner();showFound(item)}}catch(e){}isScanning=false}
-async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Melhorando foto do código e lendo...';try{const c=await imageFileToCanvas(file);const improved=enhanceCodePhoto(c);showEnhancedPreview(improved);const item=await analyzeCanvas(improved);if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mais perto, reta e somente da etiqueta.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
+async function scanFrame(){if(isScanning||!scannerStream)return;isScanning=true;const v=$('#scannerVideo'),c=$('#scannerCanvas');c.width=v.videoWidth||1280;c.height=v.videoHeight||720;c.getContext('2d').drawImage(v,0,0,c.width,c.height);try{const item=await analyzeCanvas(c,'camera');if(item){stopScanner();showFound(item)}else{$('#scannerStatus').innerHTML='Lendo... encaixe <strong>somente a etiqueta</strong> no quadro.'}}catch(e){}isScanning=false}
+async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto somente na área da etiqueta...';try{const c=await imageFileToCanvas(file);showPhotoPreview(c);const item=await analyzeCanvas(c,'photo');if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mostrando a etiqueta no topo direito, como KSA 13.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
 function renderDashboard(){const c=counts(),p=pct(c.have,c.total);$('#haveCount').textContent=c.have;$('#repeatCount').textContent=c.repeat;$('#missingCount').textContent=c.missing;$('#totalCount').textContent=c.total;$('#homeRepeatCount').textContent=c.repeat;$('#homeMissingCount').textContent=c.missing;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.have} de ${c.total} figurinhas marcadas como tenho`}
 function openView(n){$$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===n));$$('.view').forEach(v=>v.classList.remove('active'));$('#'+n).classList.add('active');if(n==='album')renderCards();if(n==='trades')renderTrades();scrollTo({top:0,behavior:'smooth'})}
 function selectGroup(g){activeGroup=g;activeTeam='';$('#search').value='';renderGroupSelector();renderTeamSelector();openView('home')}
