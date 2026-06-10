@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=codigo-foto-melhorada" />
+  <link rel="stylesheet" href="./style.css?v=codigo-corrigido" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
@@ -31,17 +31,17 @@
       </section>
 
       <section class="section-card">
-        <div class="section-head"><div><h2>📷 Leitor de código</h2><p>Encaixe somente a etiqueta com 3 letras + número dentro do quadro.</p></div></div>
+        <div class="section-head"><div><h2>📷 Leitor de código</h2><p>Aponte somente para a etiqueta com 3 letras + número.</p></div></div>
         <div class="scanner-box">
           <div class="video-wrap">
             <video id="scannerVideo" playsinline muted></video>
             <div class="code-only-guide">SIGLA + Nº</div>
           </div>
           <canvas id="scannerCanvas" class="hidden"></canvas><canvas id="enhancedPreview" class="hidden"></canvas>
-          <div id="scannerStatus" class="scanner-status">Foto enviada será melhorada antes da leitura.</div>
+          <div id="scannerStatus" class="scanner-status">A foto enviada será lida somente na etiqueta do código.</div>
           <div class="scanner-actions">
-            <button id="startScannerBtn">📷 Ler código</button>
-            <label class="file-btn">📸 Foto do código melhorada<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
+            <button id="startScannerBtn">📷 Leitor automático</button>
+            <label class="file-btn">📸 Enviar foto do código<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
             <button id="stopScannerBtn" class="ghost">Fechar</button>
           </div>
         </div>
@@ -67,6 +67,6 @@
   </main>
   <nav class="bottom-nav"><button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button><button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button><button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button></nav>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=codigo-foto-melhorada"></script>
+  <script src="./app.js?v=codigo-corrigido"></script>
 </body>
 </html>
