@@ -1,4 +1,4 @@
-const CACHE = 'album-copa2026-codigos-980-v1';
+const CACHE = 'album-copa2026-compacto-menu-v2';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -14,7 +14,5 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
