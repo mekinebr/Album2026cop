@@ -100,25 +100,22 @@ function makeCrop(src, r, scale=8, mode='contrast'){
 // Para foto enviada: procura a etiqueta no topo direito da figurinha.
 function buildCodeCrops(src, mode='camera'){
   const cameraRegions=[
-    {x:.14,y:.32,w:.72,h:.32}, // quadro maior do leitor
-    {x:.20,y:.36,w:.60,h:.24}, // centro fechado
-    {x:.10,y:.28,w:.80,h:.40}  // margem para celular com zoom diferente
+    {x:.18,y:.34,w:.64,h:.28}, // quadro central
+    {x:.12,y:.30,w:.76,h:.36}  // margem caso zoom varie
   ];
 
+  // Foto enviada: rápido, só topo direito + fallback superior.
   const photoRegions=[
     {x:.48,y:.00,w:.50,h:.22}, // topo direito aberto
     {x:.54,y:.02,w:.42,h:.18}, // etiqueta padrão
-    {x:.58,y:.03,w:.36,h:.16}, // fechado na sigla
-    {x:.40,y:.00,w:.58,h:.25}, // foto torta/aberta
-    {x:.00,y:.00,w:1.00,h:.30} // faixa superior fallback
+    {x:.00,y:.00,w:1.00,h:.28} // fallback faixa superior
   ];
 
   const regions = mode==='photo' ? photoRegions : cameraRegions;
   const crops=[];
   regions.forEach(r=>{
-    crops.push(makeCrop(src,r,8,'contrast'));  // ampliação forte
-    crops.push(makeCrop(src,r,10,'contrast')); // ampliação extra
-    crops.push(makeCrop(src,r,10,'binary'));   // preto/branco para texto pequeno
+    crops.push(makeCrop(src,r,8,'contrast'));
+    crops.push(makeCrop(src,r,10,'contrast'));
   });
   return crops;
 }
@@ -162,12 +159,63 @@ function showPhotoPreview(canvas){
   p.getContext('2d').drawImage(canvas,0,0);
 }
 
-function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=1400,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
+function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=1000,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
 function showFound(item){$('#quickCode').value=`${item.teamCode} ${item.number}`;renderQuick(item);$('#scannerStatus').textContent=`Encontrado: ${item.teamCode} ${item.number} • ${item.name}`;scrollTo({top:$('#quickResult').offsetTop-20,behavior:'smooth'})}
-async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();$('#scannerStatus').textContent='Leitor ligado. Aproxime bem a etiqueta; o app amplia as letras pequenas.';scannerLoopTimer=setInterval(scanFrame,1100)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
+
+async function applyBestCameraZoom(){
+  if(!scannerStream) return false;
+  const track=scannerStream.getVideoTracks()[0];
+  if(!track || !track.getCapabilities || !track.applyConstraints) return false;
+
+  const caps=track.getCapabilities();
+  if(!caps.zoom) return false;
+
+  // Usa zoom alto, mas não máximo absoluto para evitar tremedeira/foco ruim.
+  const min=caps.zoom.min || 1;
+  const max=caps.zoom.max || min;
+  const target=Math.min(max, Math.max(min, max >= 3 ? 2.4 : max));
+
+  try{
+    await track.applyConstraints({advanced:[{zoom:target}]});
+    $('#scannerStatus').innerHTML=`Zoom da câmera aplicado: <strong>${target.toFixed(1)}x</strong>. Mire a etiqueta.`;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+async function cycleCameraZoom(){
+  if(!scannerStream){
+    $('#scannerStatus').textContent='Abra o leitor primeiro.';
+    return;
+  }
+  const track=scannerStream.getVideoTracks()[0];
+  if(!track || !track.getCapabilities || !track.applyConstraints){
+    $('#scannerStatus').textContent='Este navegador não permite controlar zoom.';
+    return;
+  }
+  const caps=track.getCapabilities();
+  if(!caps.zoom){
+    $('#scannerStatus').textContent='Este aparelho/navegador não liberou zoom da câmera.';
+    return;
+  }
+  const current=(track.getSettings && track.getSettings().zoom) || caps.zoom.min || 1;
+  const max=caps.zoom.max || current;
+  const min=caps.zoom.min || 1;
+  let next=current + 0.7;
+  if(next > max) next=min;
+  try{
+    await track.applyConstraints({advanced:[{zoom:next}]});
+    $('#scannerStatus').innerHTML=`Zoom ajustado: <strong>${next.toFixed(1)}x</strong>.`;
+  }catch(e){
+    $('#scannerStatus').textContent='Não consegui ajustar o zoom.';
+  }
+}
+
+async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();await applyBestCameraZoom();$('#scannerStatus').textContent='Leitor ligado. Mire a etiqueta; usando zoom quando disponível.';scannerLoopTimer=setInterval(scanFrame,900)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
 function stopScanner(){if(scannerLoopTimer)clearInterval(scannerLoopTimer);scannerLoopTimer=null;if(scannerStream)scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;$('#scannerVideo').srcObject=null;$('#scannerStatus').textContent='Leitor fechado.'}
 async function scanFrame(){if(isScanning||!scannerStream)return;isScanning=true;const v=$('#scannerVideo'),c=$('#scannerCanvas');c.width=v.videoWidth||1280;c.height=v.videoHeight||720;c.getContext('2d').drawImage(v,0,0,c.width,c.height);try{const item=await analyzeCanvas(c,'camera');if(item){stopScanner();showFound(item)}else{$('#scannerStatus').innerHTML='Lendo... aproxime a <strong>etiqueta</strong> para melhorar a sigla.'}}catch(e){}isScanning=false}
-async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto somente na área da etiqueta...';try{const c=await imageFileToCanvas(file);showPhotoPreview(c);const item=await analyzeCanvas(c,'photo');if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mais perto da etiqueta, deixando a sigla bem visível.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
+async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto rapidamente na área da etiqueta...';try{const c=await imageFileToCanvas(file);showPhotoPreview(c);const item=await analyzeCanvas(c,'photo');if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mais perto da etiqueta, deixando a sigla bem visível.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
 function renderDashboard(){const c=counts(),p=pct(c.have,c.total);$('#haveCount').textContent=c.have;$('#repeatCount').textContent=c.repeat;$('#missingCount').textContent=c.missing;$('#totalCount').textContent=c.total;$('#homeRepeatCount').textContent=c.repeat;$('#homeMissingCount').textContent=c.missing;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.have} de ${c.total} figurinhas marcadas como tenho`}
 function openView(n){$$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===n));$$('.view').forEach(v=>v.classList.remove('active'));$('#'+n).classList.add('active');if(n==='album')renderCards();if(n==='trades')renderTrades();scrollTo({top:0,behavior:'smooth'})}
 function selectGroup(g){activeGroup=g;activeTeam='';$('#search').value='';renderGroupSelector();renderTeamSelector();openView('home')}
@@ -188,4 +236,4 @@ function shareTrades(){open('https://wa.me/?text='+encodeURIComponent(tradeMessa
 async function copyTrades(){try{await navigator.clipboard.writeText(tradeMessage());alert('Lista copiada!')}catch(e){alert('Não consegui copiar.')}}
 function setupInstall(){const btn=$('#installBtn');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});btn.addEventListener('click',async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null}else alert('No Android: Chrome → 3 pontinhos → Instalar aplicativo.')})}
 function renderAll(){renderDashboard();renderGroupSelector();renderTeamSelector();renderTeamProgress();renderCards();renderTrades()}
-$$('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));$$('[data-open-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.openView)));$('#findBtn').addEventListener('click',()=>renderQuick(findSticker($('#quickCode').value)));$('#quickCode').addEventListener('input',e=>{if(e.target.value.trim().length>=2)renderQuick(findSticker(e.target.value))});$('#search').addEventListener('input',renderCards);$('#statusFilter').addEventListener('change',renderCards);$('#clearSelectionBtn').addEventListener('click',clearSelection);$('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('dark');localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙'});$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';$('#shareBtn').addEventListener('click',shareTrades);$('#copyBtn').addEventListener('click',copyTrades);$('#startScannerBtn').addEventListener('click',startScanner);$('#stopScannerBtn').addEventListener('click',stopScanner);$('#photoInput').addEventListener('change',handlePhotoUpload);setupInstall();if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});renderAll();
+$$('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));$$('[data-open-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.openView)));$('#findBtn').addEventListener('click',()=>renderQuick(findSticker($('#quickCode').value)));$('#quickCode').addEventListener('input',e=>{if(e.target.value.trim().length>=2)renderQuick(findSticker(e.target.value))});$('#search').addEventListener('input',renderCards);$('#statusFilter').addEventListener('change',renderCards);$('#clearSelectionBtn').addEventListener('click',clearSelection);$('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('dark');localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙'});$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';$('#shareBtn').addEventListener('click',shareTrades);$('#copyBtn').addEventListener('click',copyTrades);$('#startScannerBtn').addEventListener('click',startScanner);$('#zoomBtn').addEventListener('click',cycleCameraZoom);$('#stopScannerBtn').addEventListener('click',stopScanner);$('#photoInput').addEventListener('change',handlePhotoUpload);setupInstall();if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});renderAll();
