@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Álbum Copa 2026 - Trocas</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <span class="eyebrow">Controle de figurinhas</span>
+      <h1>Álbum Copa 2026</h1>
+    </div>
+    <button id="themeBtn" class="icon-btn" title="Alternar tema">🌙</button>
+  </header>
+
+  <main>
+    <section id="home" class="view active">
+      <div class="dashboard">
+        <article class="hero-card">
+          <div class="hero-head">
+            <div>
+              <span>Progresso geral</span>
+              <strong id="percent">0%</strong>
+            </div>
+            <span class="trophy">🏆</span>
+          </div>
+          <div class="bar"><i id="barFill"></i></div>
+          <p id="progressText">0 de 0 figurinhas marcadas como tenho</p>
+          <div class="mini-actions">
+            <button data-go="quickBox">⚡ Marcar rápido</button>
+            <button data-open-view="trades">🤝 Trocas</button>
+            <button data-open-view="album">🔎 Buscar</button>
+          </div>
+        </article>
+        <article class="stat green"><b id="haveCount">0</b><span>Tenho</span></article>
+        <article class="stat red"><b id="missingCount">0</b><span>Faltam</span></article>
+        <article class="stat amber"><b id="repeatCount">0</b><span>Repetidas</span></article>
+        <article class="stat blue"><b id="totalCount">0</b><span>Total</span></article>
+      </div>
+
+      <section id="quickBox" class="quick panel focus-panel">
+        <div class="section-title">
+          <div>
+            <h2>⚡ Marcação rápida</h2>
+            <small>Ideal para conferir várias figurinhas na mão.</small>
+          </div>
+        </div>
+        <p>Digite código, seleção ou página. Exemplo: <b>ARG-01</b>, <b>BRA-12</b>, <b>P001-01</b>, <b>Brasil</b>.</p>
+        <div class="quick-row">
+          <input id="quickCode" placeholder="Digite aqui o número/código" autocomplete="off" />
+          <button id="findBtn" class="primary">Buscar</button>
+        </div>
+        <div id="quickResult" class="quick-result muted">Pronto para buscar.</div>
+      </section>
+
+      <section class="panel trade-summary">
+        <div>
+          <h2>🤝 Trocas rápidas</h2>
+          <p>Veja o que você tem repetido e o que falta para mandar no WhatsApp.</p>
+        </div>
+        <div class="trade-numbers">
+          <b><span id="homeRepeatCount">0</span><small>para trocar</small></b>
+          <b><span id="homeMissingCount">0</span><small>preciso</small></b>
+        </div>
+        <button data-open-view="trades" class="primary">Abrir trocas</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <h2>Grupos / ordem do álbum</h2>
+          <small>Clique em um grupo ou seleção</small>
+        </div>
+        <div id="groups" class="groups"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title">
+          <h2>Progresso por seleção</h2>
+          <small>Priorize as seleções incompletas</small>
+        </div>
+        <div id="teamProgress" class="team-progress"></div>
+      </section>
+    </section>
+
+    <section id="album" class="view">
+      <div class="filters panel sticky-panel">
+        <input id="search" placeholder="Buscar por código, seleção, grupo ou página" />
+        <select id="statusFilter">
+          <option value="all">Todos</option>
+          <option value="have">Tenho</option>
+          <option value="missing">Faltam</option>
+          <option value="repeat">Repetidas</option>
+          <option value="none">Não marcadas</option>
+        </select>
+      </div>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section id="sheets" class="view">
+      <section class="panel">
+        <div class="section-title"><h2>📖 Páginas originais do PDF</h2><small>96 páginas importadas</small></div>
+        <div id="sheetGrid" class="sheet-grid"></div>
+      </section>
+    </section>
+
+    <section id="trades" class="view">
+      <div class="trade-hero panel">
+        <h2>🤝 Central de Trocas</h2>
+        <p>Lista automática com repetidas e faltantes. Marque no álbum e compartilhe.</p>
+        <div class="trade-buttons">
+          <button id="shareBtn" class="primary">📤 Compartilhar no WhatsApp</button>
+          <button id="copyBtn">📋 Copiar lista</button>
+        </div>
+      </div>
+      <div class="trade-lists">
+        <article class="panel"><h3>🔁 Tenho repetidas</h3><textarea id="repeatList" readonly></textarea></article>
+        <article class="panel"><h3>❌ Preciso</h3><textarea id="missingList" readonly></textarea></article>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button data-view="home" class="active">🏠<span>Início</span></button>
+    <button data-view="album">🔎<span>Buscar</span></button>
+    <button data-view="sheets">📖<span>PDF</span></button>
+    <button data-view="trades">🤝<span>Trocas</span></button>
+  </nav>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <button id="closeModal" class="close">×</button>
+      <h3 id="modalTitle"></h3>
+      <img id="modalImg" alt="Página do álbum" />
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
