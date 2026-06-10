@@ -55,81 +55,48 @@ function findSticker(q){return parseCode(q)||stickers.find(x=>norm(x.name).inclu
 function matchesText(x,q){q=String(q||'').trim();if(!q)return true;return !!parseCode(q)&&parseCode(q).id===x.id||norm(x.name).includes(norm(q))||norm(x.team).includes(norm(q))||norm(x.teamCode).includes(norm(q))||norm(x.group).includes(norm(q))}
 function normalizeOcrText(t){return String(t||'').toUpperCase().replace(/[|!]/g,'I').replace(/[€¢]/g,'C').replace(/[^A-Z0-9\-\s]/g,' ').replace(/\s+/g,' ').trim()}
 function extractFromText(t){const up=normalizeOcrText(t);const variants=[up,up.replace(/\s+/g,''),up.replace(/O(?=\d)/g,'0').replace(/[IL](?=\d)/g,'1'),up.replace(/\s+/g,'').replace(/O(?=\d)/g,'0').replace(/[IL](?=\d)/g,'1')];for(const v of variants){const re=/([A-Z0-9]{3})\s*[-]?\s*([0-9OIL]{1,2})/g;let m;while((m=re.exec(v))){const item=parseCode(m[1]+m[2]);if(item)return item}}return null}
-function makeCrop(src, r, scale=8, mode='contrast'){
+function makeCrop(src, r, scale=5, mode='contrast'){
   const out=document.createElement('canvas');
   const sx=Math.max(0,Math.floor(src.width*r.x));
   const sy=Math.max(0,Math.floor(src.height*r.y));
   const sw=Math.min(src.width-sx,Math.floor(src.width*r.w));
   const sh=Math.min(src.height-sy,Math.floor(src.height*r.h));
-
-  // Super ampliação para letras pequenas da sigla.
   out.width=Math.max(1,sw*scale);
   out.height=Math.max(1,sh*scale);
-
   const o=out.getContext('2d');
   o.imageSmoothingEnabled=false;
   o.drawImage(src,sx,sy,sw,sh,0,0,out.width,out.height);
-
   const img=o.getImageData(0,0,out.width,out.height),d=img.data;
-
-  // Contraste seguro + tons de cinza, sem estourar para branco
   for(let i=0;i<d.length;i+=4){
     let g=d[i]*.299+d[i+1]*.587+d[i+2]*.114;
-    if(mode==='binary'){
-      g = g < 145 ? 0 : 255;
-    }else{
-      g=Math.max(20,Math.min(235,(g-100)*1.85+135));
-    }
+    g=Math.max(25,Math.min(230,(g-105)*1.35+135));
     d[i]=d[i+1]=d[i+2]=g;
   }
   o.putImageData(img,0,0);
-
-  // Nitidez leve usando filtro nativo: ajuda letras pequenas
-  const sharp=document.createElement('canvas');
-  sharp.width=out.width;
-  sharp.height=out.height;
-  const s=sharp.getContext('2d');
-  s.filter='contrast(1.25) brightness(1.06)';
-  s.drawImage(out,0,0);
-  s.filter='none';
-
-  return sharp;
+  return out;
 }
 
-// Para câmera: lê só o quadro central.
-// Para foto enviada: procura a etiqueta no topo direito da figurinha.
 function buildCodeCrops(src, mode='camera'){
-  const cameraRegions=[
-    {x:.18,y:.34,w:.64,h:.28}, // quadro central
-    {x:.12,y:.30,w:.76,h:.36}  // margem caso zoom varie
-  ];
-
-  // Foto enviada: rápido, só topo direito + fallback superior.
+  const cameraRegions=[{x:.20,y:.35,w:.60,h:.26}];
   const photoRegions=[
-    {x:.48,y:.00,w:.50,h:.22}, // topo direito aberto
-    {x:.54,y:.02,w:.42,h:.18}, // etiqueta padrão
-    {x:.00,y:.00,w:1.00,h:.28} // fallback faixa superior
+    {x:.48,y:.00,w:.50,h:.22},
+    {x:.00,y:.00,w:1.00,h:.26}
   ];
-
   const regions = mode==='photo' ? photoRegions : cameraRegions;
-  const crops=[];
-  regions.forEach(r=>{
-    crops.push(makeCrop(src,r,8,'contrast'));
-    crops.push(makeCrop(src,r,10,'contrast'));
-  });
-  return crops;
+  return regions.map(r=>makeCrop(src,r,5,'contrast'));
 }
 
+let ocrWorker=null;
 async function ocr(canvas){
   if(!window.Tesseract)throw new Error('OCR não carregou');
-
-  const config={
-    tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
-    tessedit_pageseg_mode:'7',
-    preserve_interword_spaces:'1'
-  };
-
-  const r=await Tesseract.recognize(canvas,'eng',config);
+  if(!ocrWorker){
+    ocrWorker=await Tesseract.createWorker('eng');
+    await ocrWorker.setParameters({
+      tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
+      tessedit_pageseg_mode:'7'
+    });
+  }
+  const r=await ocrWorker.recognize(canvas);
   return r?.data?.text||'';
 }
 
@@ -159,7 +126,7 @@ function showPhotoPreview(canvas){
   p.getContext('2d').drawImage(canvas,0,0);
 }
 
-function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=1000,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
+function imageFileToCanvas(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const max=700,ratio=Math.min(1,max/Math.max(img.width,img.height));c.width=Math.round(img.width*ratio);c.height=Math.round(img.height*ratio);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(img.src);res(c)};img.onerror=rej;img.src=URL.createObjectURL(file)})}
 function showFound(item){$('#quickCode').value=`${item.teamCode} ${item.number}`;renderQuick(item);$('#scannerStatus').textContent=`Encontrado: ${item.teamCode} ${item.number} • ${item.name}`;scrollTo({top:$('#quickResult').offsetTop-20,behavior:'smooth'})}
 
 async function applyBestCameraZoom(){
@@ -212,10 +179,41 @@ async function cycleCameraZoom(){
   }
 }
 
-async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();await applyBestCameraZoom();$('#scannerStatus').textContent='Leitor ligado. Mire a etiqueta; usando zoom quando disponível.';scannerLoopTimer=setInterval(scanFrame,900)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
+async function startScanner(){try{scannerStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});$('#scannerVideo').srcObject=scannerStream;await $('#scannerVideo').play();await applyBestCameraZoom();$('#scannerStatus').textContent='Leitor ligado. Mire a etiqueta; usando zoom quando disponível.';scannerLoopTimer=setInterval(scanFrame,1500)}catch(e){$('#scannerStatus').textContent='Não consegui abrir a câmera.'}}
 function stopScanner(){if(scannerLoopTimer)clearInterval(scannerLoopTimer);scannerLoopTimer=null;if(scannerStream)scannerStream.getTracks().forEach(t=>t.stop());scannerStream=null;$('#scannerVideo').srcObject=null;$('#scannerStatus').textContent='Leitor fechado.'}
-async function scanFrame(){if(isScanning||!scannerStream)return;isScanning=true;const v=$('#scannerVideo'),c=$('#scannerCanvas');c.width=v.videoWidth||1280;c.height=v.videoHeight||720;c.getContext('2d').drawImage(v,0,0,c.width,c.height);try{const item=await analyzeCanvas(c,'camera');if(item){stopScanner();showFound(item)}else{$('#scannerStatus').innerHTML='Lendo... aproxime a <strong>etiqueta</strong> para melhorar a sigla.'}}catch(e){}isScanning=false}
-async function handlePhotoUpload(e){const file=e.target.files&&e.target.files[0];if(!file)return;$('#scannerStatus').textContent='Lendo foto rapidamente na área da etiqueta...';try{const c=await imageFileToCanvas(file);showPhotoPreview(c);const item=await analyzeCanvas(c,'photo');if(item)showFound(item);else $('#scannerStatus').textContent='Não consegui ler. Tire a foto mais perto da etiqueta, deixando a sigla bem visível.'}catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}finally{e.target.value=''}}
+async function scanFrame(){
+  if(isScanning||!scannerStream)return;
+  isScanning=true;
+  const v=$('#scannerVideo'),c=$('#scannerCanvas');
+  c.width=v.videoWidth||960;
+  c.height=v.videoHeight||540;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  try{
+    const item=await analyzeCanvas(c,'camera');
+    if(item){
+      stopScanner();
+      showFound(item);
+    }else{
+      $('#scannerStatus').innerHTML='Lendo rápido... deixe a <strong>etiqueta</strong> no quadro.';
+    }
+  }catch(e){}
+  finally{isScanning=false;}
+}
+
+async function handlePhotoUpload(e){
+  const file=e.target.files&&e.target.files[0];
+  if(!file)return;
+  $('#scannerStatus').textContent='Lendo foto rápida...';
+  try{
+    const c=await imageFileToCanvas(file);
+    showPhotoPreview(c);
+    const item=await analyzeCanvas(c,'photo');
+    if(item)showFound(item);
+    else $('#scannerStatus').textContent='Não li. Envie foto mais perto da etiqueta do código.';
+  }catch(err){$('#scannerStatus').textContent='Erro ao ler foto.'}
+  finally{e.target.value=''}
+}
+
 function renderDashboard(){const c=counts(),p=pct(c.have,c.total);$('#haveCount').textContent=c.have;$('#repeatCount').textContent=c.repeat;$('#missingCount').textContent=c.missing;$('#totalCount').textContent=c.total;$('#homeRepeatCount').textContent=c.repeat;$('#homeMissingCount').textContent=c.missing;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.have} de ${c.total} figurinhas marcadas como tenho`}
 function openView(n){$$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===n));$$('.view').forEach(v=>v.classList.remove('active'));$('#'+n).classList.add('active');if(n==='album')renderCards();if(n==='trades')renderTrades();scrollTo({top:0,behavior:'smooth'})}
 function selectGroup(g){activeGroup=g;activeTeam='';$('#search').value='';renderGroupSelector();renderTeamSelector();openView('home')}
