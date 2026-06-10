@@ -266,15 +266,67 @@ function findSticker(q) {
   const clean = norm(q).replace(/\s/g,'').replace('-','');
   return stickers.find(x => norm(x.code.replace('-','')) === clean) || stickers.find(x => matchesText(x,q));
 }
-function extractStickerCode(text) {
-  const up = String(text || '').toUpperCase().replace(/[^A-Z0-9\-\s]/g, ' ');
-  const compact = up.replace(/\s+/g, '');
-  let m = compact.match(/([A-Z]{3})[\-]?(\d{1,2})/);
-  if (m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}`;
-  m = up.match(/([A-Z]{3})\s*(\d{1,2})/);
-  if (m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}`;
-  return '';
+function normalizeOcrText(text) {
+  return String(text || '')
+    .toUpperCase()
+    .replace(/[|]/g, 'I')
+    .replace(/[€]/g, 'C')
+    .replace(/[(){}\[\]]/g, ' ')
+    .replace(/[^A-Z0-9\-\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
+
+function extractStickerCode(text) {
+  const up = normalizeOcrText(text);
+  const compact = up.replace(/\s+/g, '').replace(/O(?=\d)/g, '0').replace(/I(?=\d)/g, '1');
+
+  // Busca código junto ou separado: CAN15, CAN 15, CAN-15
+  let m = compact.match(/([A-Z]{3})[-]?(\d{1,2})/);
+  if (!m) m = up.match(/([A-Z]{3})\s*[-]?\s*(\d{1,2})/);
+  if (!m) return '';
+
+  let sigla = m[1];
+  let num = Number(m[2]);
+
+  // Correções comuns OCR
+  const fixes = { '0AN':'CAN', 'C4N':'CAN', 'CAH':'CAN', 'CAM':'CAN', 'BRA':'BRA', '8RA':'BRA', 'ARG':'ARG', 'AR6':'ARG' };
+  sigla = fixes[sigla] || sigla;
+
+  if (!Number.isFinite(num) || num < 0 || num > 99) return '';
+  return `${sigla}-${String(num).padStart(2, '0')}`;
+}
+
+function preprocessScannerImage(sourceCanvas) {
+  const src = sourceCanvas;
+  const crop = document.createElement('canvas');
+  const ctx = src.getContext('2d');
+
+  // 1) tenta região superior direita, onde fica CAN 15 no verso
+  const x = Math.floor(src.width * 0.50);
+  const y = Math.floor(src.height * 0.02);
+  const w = Math.floor(src.width * 0.48);
+  const h = Math.floor(src.height * 0.24);
+
+  const scale = 3;
+  crop.width = w * scale;
+  crop.height = h * scale;
+  const cctx = crop.getContext('2d');
+  cctx.imageSmoothingEnabled = false;
+  cctx.drawImage(src, x, y, w, h, 0, 0, crop.width, crop.height);
+
+  const img = cctx.getImageData(0, 0, crop.width, crop.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+    // aumenta contraste para texto escuro em fundo claro/cinza
+    const v = gray < 150 ? 0 : 255;
+    d[i] = d[i+1] = d[i+2] = v;
+  }
+  cctx.putImageData(img, 0, 0);
+  return crop;
+}
+
 function renderDashboard() {
   const c = counts(), p = pct(c.have,c.total);
   $('#haveCount').textContent = c.have; $('#repeatCount').textContent = c.repeat; $('#missingCount').textContent = c.missing; $('#totalCount').textContent = c.total;
@@ -362,29 +414,54 @@ function stopScanner() {
 async function scanFrame() {
   const video = $('#scannerVideo'), canvas = $('#scannerCanvas'), status = $('#scannerStatus');
   if (!video.srcObject) { status.textContent = 'Abra a câmera primeiro.'; return; }
-  status.textContent = 'Lendo código... segure a câmera firme.';
+
+  status.textContent = 'Lendo código... mire no canto onde aparece CAN 15 / BRA 07.';
   const w = video.videoWidth || 1280, h = video.videoHeight || 720;
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, w, h);
+
   try {
     let text = '';
+    let code = '';
+
+    // 1) OCR na área recortada superior direita
     if (window.Tesseract) {
-      const result = await Tesseract.recognize(canvas, 'eng');
-      text = result?.data?.text || '';
+      const cropped = preprocessScannerImage(canvas);
+      const result1 = await Tesseract.recognize(cropped, 'eng', {
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',
+        tessedit_pageseg_mode: '7'
+      });
+      text = result1?.data?.text || '';
+      code = extractStickerCode(text);
+
+      // 2) Se falhar, tenta imagem inteira
+      if (!code) {
+        const result2 = await Tesseract.recognize(canvas, 'eng', {
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',
+          tessedit_pageseg_mode: '6'
+        });
+        text += ' ' + (result2?.data?.text || '');
+        code = extractStickerCode(text);
+      }
     }
-    const code = extractStickerCode(text);
+
     if (code) {
       $('#quickCode').value = code;
       const item = findSticker(code);
       renderQuick(item);
-      status.textContent = item ? `Código encontrado: ${code}` : `Li ${code}, mas não achei na base.`;
-      if (item) window.scrollTo({ top: $('#quickResult').offsetTop - 20, behavior: 'smooth' });
+      status.textContent = item
+        ? `Código encontrado: ${code}.`
+        : `Li ${code}, mas não achei na base. Confira se o número está correto.`;
+
+      if (item) {
+        window.scrollTo({ top: $('#quickResult').offsetTop - 20, behavior: 'smooth' });
+      }
     } else {
-      status.textContent = 'Não consegui identificar. Tente aproximar mais do código ou digite manualmente.';
+      status.textContent = 'Não consegui ler. Dica: aproxime o canto superior direito, deixe bem iluminado e toque em “Ler código”.';
     }
   } catch(e) {
-    status.textContent = 'Erro na leitura. Tente novamente com mais luz.';
+    status.textContent = 'Erro na leitura. Tente novamente com mais luz e câmera firme.';
   }
 }
 
