@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=scanner-etiqueta" />
+  <link rel="stylesheet" href="./style.css?v=scanner-auto-foto" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
@@ -32,19 +32,18 @@
       </section>
 
       <section class="section-card">
-        <div class="section-head"><div><h2>📷 Scanner digitalizador</h2><p>Enquadre a figurinha inteira ou envie foto. Mire diretamente na etiqueta do código, no topo direito da figurinha.</p></div></div>
+        <div class="section-head"><div><h2>📷 Scanner digitalizador</h2><p>Enquadre a figurinha inteira ou envie foto. Use Scanner automático ou Enviar foto. O app testa vários zooms da etiqueta do código.</p></div></div>
         <div class="scanner-box">
           <div class="video-wrap">
             <video id="scannerVideo" playsinline muted></video>
-            <div class="scan-card-guide"><span>Mire a etiqueta</span></div>
+            <div class="scan-card-guide"><span>Etiqueta</span></div>
             <div class="scan-code-guide">Código</div>
           </div>
           <canvas id="scannerCanvas" class="hidden"></canvas>
           <canvas id="previewCanvas" class="preview-canvas"></canvas>
           <div id="scannerStatus" class="scanner-status">Aponte para a figurinha inteira ou envie uma foto nítida.</div>
           <div class="scanner-actions">
-            <button id="startScannerBtn">Abrir câmera</button>
-            <button id="scanFrameBtn" class="ghost">Ler etiqueta</button><button id="flashBtn" class="ghost">🔦 Flash</button>
+            <button id="startScannerBtn">📷 Scanner automático</button>
             <label class="file-btn">📸 Enviar foto<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
             <button id="stopScannerBtn" class="ghost">Fechar</button>
           </div>
@@ -72,6 +71,6 @@
 
   <nav class="bottom-nav"><button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button><button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button><button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button></nav>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=scanner-etiqueta"></script>
+  <script src="./app.js?v=scanner-auto-foto"></script>
 </body>
 </html>
