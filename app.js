@@ -218,13 +218,14 @@ const GROUP_DATA = {
 };
 const SPECIALS = [{ group: 'Extras', team: 'História da Copa', code: 'FWC', total: 20 }];
 const GROUPS = Object.entries(GROUP_DATA).map(([letter, teams]) => ({ letter, name: 'Grupo ' + letter, teams: teams.map(([team, code]) => ({ team, code, total: 20 })) }));
-let activeGroup = '', activeTeam = '', activeCode = '';
+let activeGroup = '', activeTeam = '', activeCode = '', deferredInstallPrompt = null, scannerStream = null;
 const state = JSON.parse(localStorage.getItem('albumCopa2026StatusV2') || '{}');
 const theme = localStorage.getItem('albumTheme');
 if (theme === 'dark') document.body.classList.add('dark');
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 function makeStickers() {
   const arr = [];
   GROUPS.forEach(g => g.teams.forEach(t => {
@@ -242,6 +243,7 @@ function makeStickers() {
   return arr;
 }
 const stickers = makeStickers();
+
 function save() { localStorage.setItem('albumCopa2026StatusV2', JSON.stringify(state)); renderAll(); }
 function setStatus(id, status) { if (status === 'none') delete state[id]; else state[id] = status; save(); }
 function cycleStatus(id) { const order = ['none','have','missing','repeat']; setStatus(id, order[(order.indexOf(getStatus(id)) + 1) % order.length]); }
@@ -263,6 +265,15 @@ function findSticker(q) {
   q = String(q || '').trim(); if (!q) return null;
   const clean = norm(q).replace(/\s/g,'').replace('-','');
   return stickers.find(x => norm(x.code.replace('-','')) === clean) || stickers.find(x => matchesText(x,q));
+}
+function extractStickerCode(text) {
+  const up = String(text || '').toUpperCase().replace(/[^A-Z0-9\-\s]/g, ' ');
+  const compact = up.replace(/\s+/g, '');
+  let m = compact.match(/([A-Z]{3})[\-]?(\d{1,2})/);
+  if (m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}`;
+  m = up.match(/([A-Z]{3})\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${String(Number(m[2])).padStart(2,'0')}`;
+  return '';
 }
 function renderDashboard() {
   const c = counts(), p = pct(c.have,c.total);
@@ -330,6 +341,71 @@ function renderQuick(x) {
 function tradeMessage() { return `🏆 Álbum Copa 2026\n\n🔁 Tenho repetidas:\n${$('#repeatList').value}\n\n❌ Preciso:\n${$('#missingList').value}`; }
 function shareTrades() { window.open('https://wa.me/?text='+encodeURIComponent(tradeMessage()),'_blank'); }
 async function copyTrades() { try{await navigator.clipboard.writeText(tradeMessage());alert('Lista copiada!')}catch(e){alert('Não consegui copiar.')} }
+
+async function startScanner() {
+  const video = $('#scannerVideo');
+  try {
+    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = scannerStream;
+    await video.play();
+    $('#scannerStatus').textContent = 'Câmera aberta. Aponte para o código e toque em “Ler código”.';
+  } catch(e) {
+    $('#scannerStatus').textContent = 'Não consegui abrir a câmera. Confira a permissão do navegador.';
+  }
+}
+function stopScanner() {
+  if (scannerStream) scannerStream.getTracks().forEach(t => t.stop());
+  scannerStream = null;
+  $('#scannerVideo').srcObject = null;
+  $('#scannerStatus').textContent = 'Scanner fechado.';
+}
+async function scanFrame() {
+  const video = $('#scannerVideo'), canvas = $('#scannerCanvas'), status = $('#scannerStatus');
+  if (!video.srcObject) { status.textContent = 'Abra a câmera primeiro.'; return; }
+  status.textContent = 'Lendo código... segure a câmera firme.';
+  const w = video.videoWidth || 1280, h = video.videoHeight || 720;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+  try {
+    let text = '';
+    if (window.Tesseract) {
+      const result = await Tesseract.recognize(canvas, 'eng');
+      text = result?.data?.text || '';
+    }
+    const code = extractStickerCode(text);
+    if (code) {
+      $('#quickCode').value = code;
+      const item = findSticker(code);
+      renderQuick(item);
+      status.textContent = item ? `Código encontrado: ${code}` : `Li ${code}, mas não achei na base.`;
+      if (item) window.scrollTo({ top: $('#quickResult').offsetTop - 20, behavior: 'smooth' });
+    } else {
+      status.textContent = 'Não consegui identificar. Tente aproximar mais do código ou digite manualmente.';
+    }
+  } catch(e) {
+    status.textContent = 'Erro na leitura. Tente novamente com mais luz.';
+  }
+}
+
+function setupInstall() {
+  const btn = $('#installBtn'), card = $('#installCard');
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    card.style.display = 'flex';
+  });
+  btn.addEventListener('click', async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+    } else {
+      alert('No Android: abra no Chrome, toque nos 3 pontinhos e escolha “Instalar aplicativo” ou “Adicionar à tela inicial”.');
+    }
+  });
+}
+
 function renderAll() { renderDashboard(); renderGroupSelector(); renderTeamSelector(); renderTeamProgress(); renderCards(); renderTrades(); }
 $$('.bottom-nav button').forEach(btn=>btn.addEventListener('click',()=>openView(btn.dataset.view)));
 $$('[data-open-view]').forEach(btn=>btn.addEventListener('click',()=>openView(btn.dataset.openView)));
@@ -340,5 +416,7 @@ $('#search').addEventListener('input',renderCards); $('#statusFilter').addEventL
 $('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('dark');localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';});
 $('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
 $('#shareBtn').addEventListener('click',shareTrades); $('#copyBtn').addEventListener('click',copyTrades);
+$('#startScannerBtn').addEventListener('click',startScanner); $('#scanFrameBtn').addEventListener('click',scanFrame); $('#stopScannerBtn').addEventListener('click',stopScanner);
+setupInstall();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
 renderAll();
