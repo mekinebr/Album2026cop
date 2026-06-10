@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=scanner-install" />
+  <link rel="stylesheet" href="./style.css?v=scanner-preciso" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
@@ -43,7 +43,7 @@
         <div class="section-head">
           <div>
             <h2>Busca rápida</h2>
-            <p>Digite BRA-07, ARG, Brasil ou Grupo C.</p>
+            <p>Digite BRA-07, CAN 15, ARG, Brasil ou Grupo C.</p>
           </div>
         </div>
         <div class="quick-row">
@@ -57,13 +57,16 @@
         <div class="section-head">
           <div>
             <h2>📷 Scanner de código</h2>
-            <p>Use a câmera para tentar ler a sigla e número da figurinha.</p>
+            <p>Aponte para o canto onde aparece o código, exemplo: CAN 15.</p>
           </div>
         </div>
         <div class="scanner-box">
-          <video id="scannerVideo" playsinline muted></video>
+          <div class="video-wrap">
+            <video id="scannerVideo" playsinline muted></video>
+            <div class="scan-guide">Código aqui</div>
+          </div>
           <canvas id="scannerCanvas" class="hidden"></canvas>
-          <div id="scannerStatus" class="scanner-status">Aponte para o código tipo BRA-07.</div>
+          <div id="scannerStatus" class="scanner-status">Aponte para o código tipo CAN 15, BRA 07 ou ARG 03.</div>
           <div class="scanner-actions">
             <button id="startScannerBtn">Abrir câmera</button>
             <button id="scanFrameBtn" class="ghost">Ler código</button>
@@ -104,7 +107,7 @@
           <button id="clearSelectionBtn" class="ghost">Limpar</button>
         </div>
         <div class="search-row">
-          <input id="search" placeholder="Buscar por BRA-01, Brasil, Grupo C..." />
+          <input id="search" placeholder="Buscar por BRA-01, CAN 15, Brasil, Grupo C..." />
           <select id="statusFilter">
             <option value="all">Todos</option>
             <option value="none">Não marcado</option>
@@ -145,6 +148,6 @@
   </nav>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=scanner-install"></script>
+  <script src="./app.js?v=scanner-preciso"></script>
 </body>
 </html>
