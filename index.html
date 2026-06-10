@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=codigos980" />
+  <link rel="stylesheet" href="./style.css?v=compacto-menu" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
@@ -34,8 +34,8 @@
       <section class="quick-panel">
         <div class="section-head">
           <div>
-            <h2>Busca rápida para troca</h2>
-            <p>Digite o código da figurinha, seleção ou grupo. Exemplo: BRA-07, ARG, Brasil, Grupo C.</p>
+            <h2>Busca rápida</h2>
+            <p>Digite BRA-07, ARG, Brasil ou Grupo C.</p>
           </div>
         </div>
         <div class="quick-row">
@@ -60,7 +60,7 @@
         <div class="section-head">
           <div>
             <h2>Resumo por seleção</h2>
-            <p>Veja rapidamente onde faltam figurinhas.</p>
+            <p>Veja onde faltam figurinhas.</p>
           </div>
         </div>
         <div id="teamProgress" class="team-progress"></div>
@@ -74,7 +74,7 @@
             <h2 id="albumTitle">Figurinhas</h2>
             <p id="albumSubtitle">Selecione um grupo ou use a busca.</p>
           </div>
-          <button id="clearSelectionBtn" class="ghost">Limpar filtro</button>
+          <button id="clearSelectionBtn" class="ghost">Limpar</button>
         </div>
         <div class="search-row">
           <input id="search" placeholder="Buscar por BRA-01, Brasil, Grupo C..." />
@@ -100,8 +100,8 @@
           <div><b id="homeMissingCount">0</b><span>faltam</span></div>
         </div>
         <div class="trade-actions">
-          <button id="shareBtn">📲 Compartilhar WhatsApp</button>
-          <button id="copyBtn" class="ghost">Copiar lista</button>
+          <button id="shareBtn">📲 WhatsApp</button>
+          <button id="copyBtn" class="ghost">Copiar</button>
         </div>
       </section>
       <div class="trade-grid">
@@ -112,9 +112,9 @@
   </main>
 
   <nav class="bottom-nav">
-    <button data-view="home" class="active">🏠<span>Início</span></button>
-    <button data-view="album">🔎<span>Álbum</span></button>
-    <button data-view="trades">🤝<span>Trocas</span></button>
+    <button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button>
+    <button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button>
+    <button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button>
   </nav>
 
   <script src="./app.js?v=codigos980"></script>
