@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Álbum Copa 2026</title>
-  <link rel="stylesheet" href="./style.css?v=codigo-travado" />
+  <link rel="stylesheet" href="./style.css?v=codigo-foto-melhorada" />
   <link rel="manifest" href="./manifest.json" />
 </head>
 <body>
@@ -37,11 +37,11 @@
             <video id="scannerVideo" playsinline muted></video>
             <div class="code-only-guide">SIGLA + Nº</div>
           </div>
-          <canvas id="scannerCanvas" class="hidden"></canvas>
-          <div id="scannerStatus" class="scanner-status">O leitor só analisa o quadro da etiqueta.</div>
+          <canvas id="scannerCanvas" class="hidden"></canvas><canvas id="enhancedPreview" class="hidden"></canvas>
+          <div id="scannerStatus" class="scanner-status">Foto enviada será melhorada antes da leitura.</div>
           <div class="scanner-actions">
             <button id="startScannerBtn">📷 Ler código</button>
-            <label class="file-btn">📸 Foto do código<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
+            <label class="file-btn">📸 Foto do código melhorada<input id="photoInput" type="file" accept="image/*" capture="environment"></label>
             <button id="stopScannerBtn" class="ghost">Fechar</button>
           </div>
         </div>
@@ -67,6 +67,6 @@
   </main>
   <nav class="bottom-nav"><button data-view="home" class="active"><span class="nav-ico">🏠</span><span>Início</span></button><button data-view="album"><span class="nav-ico">🔎</span><span>Álbum</span></button><button data-view="trades"><span class="nav-ico">🤝</span><span>Trocas</span></button></nav>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="./app.js?v=codigo-travado"></script>
+  <script src="./app.js?v=codigo-foto-melhorada"></script>
 </body>
 </html>
