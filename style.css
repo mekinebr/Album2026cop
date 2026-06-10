@@ -3,4 +3,5 @@
 .scan-card-guide{animation:pulseGuide 1.8s infinite}
 @keyframes pulseGuide{0%,100%{border-color:#22c55e}50%{border-color:#facc15}}
 
-.preview-canvas.enhanced{display:block;max-height:240px;object-fit:contain;background:#050b16}
+.preview-canvas{display:none!important}
+.scan-card-guide{animation:none!important}
