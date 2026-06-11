@@ -131,16 +131,44 @@ function renderStats(){
   $('#statsPanel').innerHTML=`<div class="stats-card"><h3>Mais completas</h3>${most.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Menos completas</h3>${least.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`;
 }
 function renderTrades(){}
+
+function listTextByStatus(status){
+  return stickers
+    .filter(x=>getStatus(x.id)===status)
+    .map(x=>`${x.code} ${x.number} - ${x.team}`)
+    .join('\n');
+}
+function missingText(){
+  return listTextByStatus('missing') || 'Nenhuma faltando.';
+}
+function repeatText(){
+  return listTextByStatus('repeat') || 'Nenhuma repetida.';
+}
 function shareText(){
-  const repeat=stickers.filter(x=>getStatus(x.id)==='repeat').map(x=>`${x.code} ${x.number} - ${x.team}`).join('\n')||'Nenhuma repetida.';
-  const miss=stickers.filter(x=>getStatus(x.id)==='missing').map(x=>`${x.code} ${x.number} - ${x.team}`).join('\n')||'Nenhuma faltando.';
-  return`🏆 Álbum Copa 2026\n\n🔁 Repetidas:\n${repeat}\n\n❌ Me falta:\n${miss}`;
+  return`🏆 Álbum Copa 2026\n\n🔁 Repetidas:\n${repeatText()}\n\n❌ Me falta:\n${missingText()}`;
+}
+function missingShareText(){
+  return`🏆 Álbum Copa 2026\n\n❌ ME FALTAM\n\n${missingText()}`;
+}
+function repeatShareText(){
+  return`🏆 Álbum Copa 2026\n\n🔁 REPETIDAS\n\n${repeatText()}`;
 }
 async function copyList(){
   try{await navigator.clipboard.writeText(shareText());alert('Lista copiada!')}
   catch(e){alert('Não consegui copiar.')}
 }
 function shareWhats(){window.open('https://wa.me/?text='+encodeURIComponent(shareText()),'_blank')}
+async function copyMissing(){
+  try{await navigator.clipboard.writeText(missingShareText());alert('Lista de faltantes copiada!')}
+  catch(e){alert('Não consegui copiar.')}
+}
+function shareMissing(){window.open('https://wa.me/?text='+encodeURIComponent(missingShareText()),'_blank')}
+async function copyRepeats(){
+  try{await navigator.clipboard.writeText(repeatShareText());alert('Lista de repetidas copiada!')}
+  catch(e){alert('Não consegui copiar.')}
+}
+function shareRepeats(){window.open('https://wa.me/?text='+encodeURIComponent(repeatShareText()),'_blank')}
+
 function render(){renderDashboard();renderGroups();renderBoards();renderLists();renderStats()}
 
 $('#searchInput').addEventListener('input',e=>{query=e.target.value;renderBoards()});
@@ -152,8 +180,14 @@ $('#themeBtn').addEventListener('click',()=>{
   $('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
 });
 $('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
-$('#copyBtn').addEventListener('click',copyList);
-$('#shareBtn').addEventListener('click',shareWhats);
+
+const copyBtn=$('#copyBtn'); if(copyBtn)copyBtn.addEventListener('click',copyList);
+const shareBtn=$('#shareBtn'); if(shareBtn)shareBtn.addEventListener('click',shareWhats);
+const copyMissingBtn=$('#copyMissingBtn'); if(copyMissingBtn)copyMissingBtn.addEventListener('click',copyMissing);
+const shareMissingBtn=$('#shareMissingBtn'); if(shareMissingBtn)shareMissingBtn.addEventListener('click',shareMissing);
+const copyRepeatsBtn=$('#copyRepeatsBtn'); if(copyRepeatsBtn)copyRepeatsBtn.addEventListener('click',copyRepeats);
+const shareRepeatsBtn=$('#shareRepeatsBtn'); if(shareRepeatsBtn)shareRepeatsBtn.addEventListener('click',shareRepeats);
+
 $('#backBtn').addEventListener('click',goBack);
 $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
 $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
