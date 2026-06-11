@@ -3,8 +3,19 @@
 .num-btn.have::after{content:'✓';position:absolute;right:3px;top:1px;font-size:10px;color:white}
 .num-btn.repeat::after{content:'↻';position:absolute;right:3px;top:1px;font-size:10px;color:white}
 
-
-/* CORES FINAIS */
+/* Botões finais de copiar e WhatsApp */
+.trade-actions button{
+  flex:1;
+  min-width:160px;
+}
+#shareMissingBtn,#shareRepeatsBtn{
+  background:#22c55e !important;
+  color:#fff !important;
+}
+#copyMissingBtn,#copyRepeatsBtn{
+  background:#2563eb !important;
+  color:#fff !important;
+}
 .num-btn.missing{
   background:#ef4444 !important;
   border:2px solid #dc2626 !important;
