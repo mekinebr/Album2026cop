@@ -17,7 +17,40 @@ function groupItems(g){return stickers.filter(x=>x.group===g)}function teamItems
 function visibleSticker(x){const q=norm(query.trim()),st=getStatus(x.id);const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');const queryOk=!q||norm(x.team).includes(q)||norm(x.code).includes(q)||norm(x.groupName).includes(q);return statusOk&&queryOk}
 function goView(v,push=true){if(push&&currentView!==v)viewStack.push(v);currentView=v;$$('.app-view').forEach(el=>el.classList.remove('active'));$('#view-'+v).classList.add('active');$$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();scrollTo({top:0,behavior:'smooth'})}
 function goBack(){if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}else goView('groups',false)}
-function renderDashboard(){const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;$('#haveCount').textContent=c.owned;$('#missingCount').textContent=c.missing;$('#repeatCount').textContent=c.repeat;$('#totalCount').textContent=c.total}
+function renderBoards(){
+  const teams=GROUPS[activeGroup];
+
+  $('#bingoGrid').innerHTML=teams.map(([team,code])=>{
+    const items=teamItems(code), c=counts(items);
+
+    const nums=items.map(x=>{
+      const st=getStatus(x.id);
+      const hide=visibleSticker(x)?'':'hidden';
+
+      return `<button class="num-btn ${st} ${hide}" onclick="cycle('${x.id}')" title="${code} ${x.number}">${x.number}</button>`;
+    }).join('');
+
+    const any=items.some(visibleSticker);
+
+    return `<article class="team-board ${any?'':'hidden'}">
+      <div class="team-head">
+        <div>
+          <h3>${team}</h3>
+          <small>${code} · Grupo ${activeGroup}</small>
+        </div>
+        <div class="team-stats">
+          ✅ ${c.owned}/${c.total}<br>
+          🔁 ${c.repeat} · ❌ ${c.missing}
+        </div>
+      </div>
+      <div class="num-grid">${nums}</div>
+    </article>`;
+  }).join('');
+
+  const c=counts(groupItems(activeGroup));
+
+  $('#activeInfo').innerHTML=`📌 Grupo <b>${activeGroup}</b> · ✅ Tenho/Repetidas: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeat}</b> · ❌ Me falta: <b>${c.missing}</b>`;
+}
 function renderGroups(){$('#groupSelector').innerHTML=Object.entries(GROUPS).map(([g])=>{const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;return`<button class="group-btn ${activeGroup===g?'active':''}" onclick="selectGroup('${g}')"><b>Grupo ${g}</b><br><small>✅ ${c.owned}/${c.total} · ${p}%</small></button>`}).join('')}
 function selectGroup(g){activeGroup=g;goView('groups',false);document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'})}
 function renderBoards(){const teams=GROUPS[activeGroup];$('#bingoGrid').innerHTML=teams.map(([team,code])=>{const items=teamItems(code),c=counts(items);const nums=items.map(x=>{const st=getStatus(x.id),hide=visibleSticker(x)?'':'hidden',return`<button class="num-btn ${st} ${hide}" onclick="cycle('${x.id}')" title="${code} ${x.number}">${x.number}</button>`}).join('');const any=items.some(visibleSticker);return`<article class="team-board ${any?'':'hidden'}"><div class="team-head"><div><h3>${team}</h3><small>${code} · Grupo ${activeGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeat} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`}).join('');const c=counts(groupItems(activeGroup));$('#activeInfo').innerHTML=`📌 Grupo <b>${activeGroup}</b> · ✅ Tenho/Repetidas: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeat}</b> · ❌ Me falta: <b>${c.missing}</b>`}
