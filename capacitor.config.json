@@ -1,6 +1,11 @@
 {
-  "appId": "com.album2026.app",
-  "appName": "Álbum Copa 2026",
-  "webDir": "www",
-  "bundledWebRuntime": false
+  "name": "album2026",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/cli": "^7.4.2",
+    "typescript": "^5.6.3"
+  }
 }
