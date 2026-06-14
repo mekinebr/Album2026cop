@@ -3,12 +3,28 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="theme-color" content="#22c55e"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Álbum Copa 2026</title><link rel="stylesheet" href="./style.css?v=v4-final"/><link rel="manifest" href="./manifest.json"/>
+<title>Álbum Copa 2026</title>
+<link rel="stylesheet" href="./style.css?v=v5-final"/>
+<link rel="manifest" href="./manifest.json"/>
 </head>
 <body>
 <main class="app-shell">
-<header class="topbar"><div><span class="eyebrow">Checklist rápido de figurinhas</span><h1>🏆 Álbum Copa 2026</h1></div><button id="themeBtn" class="icon-btn">🌙</button></header>
-<section class="install-card"><div><b>📲 Usar como aplicativo</b><p>Instale no Android e use backup antes de atualizar.</p></div><button id="installBtn">Instalar</button></section>
+<header class="topbar">
+  <div><span class="eyebrow">Checklist rápido de figurinhas</span><h1>🏆 Álbum Copa 2026</h1></div>
+  <button id="themeBtn" class="icon-btn">🌙</button>
+</header>
+
+<a class="ad-banner" href="https://wa.me/5592992800688" target="_blank" rel="noopener">
+  <b>📺 Tenha tudo em um só lugar</b>
+  <span>Venha para SUPER MTV</span>
+  <small>Fale no WhatsApp</small>
+</a>
+
+<section class="install-card">
+  <div><b>📲 Usar como aplicativo</b><p>Os dados salvam automaticamente no aparelho. Use backup antes de trocar de celular.</p></div>
+  <button id="installBtn">Instalar</button>
+</section>
+
 <section class="dashboard">
 <div class="progress-card"><div class="card-title">Progresso geral</div><strong id="percent">0%</strong><div class="progress"><i id="barFill"></i></div><p id="progressText">0 marcadas</p></div>
 <button class="stat have" data-view="stats"><span>✅</span><b id="haveCount">0</b><small>Tenho</small></button>
@@ -16,19 +32,26 @@
 <button class="stat repeat" data-view="repeats"><span>🔁</span><b id="repeatCount">0</b><small>Repetidas</small></button>
 <button class="stat total" data-view="groups"><span>📒</span><b id="totalCount">0</b><small>Total</small></button>
 </section>
-<section class="help-card"><b>Toques:</b><span>🔴 0 = Me falta</span><span>🟢 1 = Tenho</span><span>🟡 2+ = x2, x3...</span><span>x5 volta para Me falta</span></section>
+
+<section class="help-card">
+  <b>Toques:</b>
+  <span>🔴 0 = Me falta</span>
+  <span>🟢 1 = Tenho</span>
+  <span>🟡 2+ = Repetida sem limite</span>
+  <span>Segure o número para zerar</span>
+</section>
 
 <section id="view-groups" class="app-view active">
-<section class="section-card group-section"><div class="section-head"><h2>Escolha o grupo</h2><p>Bandeiras e siglas para encontrar rápido.</p></div><div id="groupSelector" class="group-selector"></div></section>
-<section class="tools-card"><input id="searchInput" placeholder="Buscar: BRA, Brasil, FWC, CC..."/><select id="statusFilter"><option value="all">Todos</option><option value="missing">Me falta</option><option value="have">Tenho</option><option value="repeat">Repetidas</option></select><button id="clearGroupBtn" class="ghost">Limpar</button></section>
+<section class="section-card group-section"><div class="section-head"><h2>Escolha o grupo</h2><p>Agora aparece somente as siglas das 4 seleções.</p></div><div id="groupSelector" class="group-selector"></div></section>
+<section class="tools-card"><input id="searchInput" placeholder="Buscar: BRA 11, Brasil, FWC 00, CC 2..."/><select id="statusFilter"><option value="all">Todos</option><option value="missing">Me falta</option><option value="have">Tenho</option><option value="repeat">Repetidas</option></select><button id="clearGroupBtn" class="ghost">Limpar</button></section>
 <section id="activeInfo" class="active-info"></section><section id="bingoGrid" class="bingo-grid"></section>
 </section>
 
 <section id="view-missing" class="app-view"><section class="section-card"><div class="section-head"><h2>❌ Me falta</h2><p>Por grupo e seleção.</p></div><div class="trade-actions"><button id="copyMissingBtn" class="ghost">📋 Copiar Me Faltam</button><button id="shareMissingBtn">📲 WhatsApp Me Faltam</button></div><div id="missingPanel" class="list-panel"></div></section></section>
-<section id="view-repeats" class="app-view"><section class="section-card"><div class="section-head"><h2>🔁 Repetidas</h2><p>Mostra quantidade: x2, x3...</p></div><div class="trade-actions"><button id="copyRepeatsBtn" class="ghost">📋 Copiar Repetidas</button><button id="shareRepeatsBtn">📲 WhatsApp Repetidas</button></div><div id="repeatPanel" class="list-panel"></div></section></section>
+<section id="view-repeats" class="app-view"><section class="section-card"><div class="section-head"><h2>🔁 Repetidas</h2><p>Quantidade ilimitada: x2, x3, x4...</p></div><div class="trade-actions"><button id="copyRepeatsBtn" class="ghost">📋 Copiar Repetidas</button><button id="shareRepeatsBtn">📲 WhatsApp Repetidas</button></div><div id="repeatPanel" class="list-panel"></div></section></section>
 <section id="view-stats" class="app-view"><section class="section-card"><div class="section-head"><h2>📊 Estatísticas</h2><p>Top 10, menos completas e colagens por dia.</p></div><div id="statsPanel" class="stats-panel"></div></section></section>
-<section id="view-backup" class="app-view"><section class="section-card"><div class="section-head"><h2>💾 Backup</h2><p>Exporte antes de atualizar ou trocar de celular.</p></div><div class="backup-actions"><button id="exportBackupBtn">📤 Exportar Backup</button><label class="file-btn">📥 Importar Backup<input id="importBackupInput" type="file" accept="application/json"></label></div></section></section>
+<section id="view-backup" class="app-view"><section class="section-card"><div class="section-head"><h2>💾 Backup</h2><p>Os dados salvam automaticamente. O backup é só para trocar de celular ou evitar perda.</p></div><div class="backup-actions"><button id="exportBackupBtn">📤 Exportar Backup</button><label class="file-btn">📥 Importar Backup<input id="importBackupInput" type="file" accept="application/json"></label></div></section></section>
 </main>
 <nav class="bottom-nav"><button id="backBtn">⬅️<span>Voltar</span></button><button data-view="groups" class="active">🔢<span>Grupos</span></button><button data-view="missing">❌<span>Faltam</span></button><button data-view="repeats">🔁<span>Repetidas</span></button><button data-view="stats">📊<span>Status</span></button><button data-view="backup">💾<span>Backup</span></button></nav>
-<script src="./app.js?v=v4-final"></script>
+<script src="./app.js?v=v5-final"></script>
 </body></html>
