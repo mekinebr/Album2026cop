@@ -5,10 +5,18 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#f3f6fb",
   "theme_color": "#22c55e",
   "lang": "pt-BR",
+  "categories": [
+    "sports",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "./icons/icon-192.png",
@@ -23,13 +31,28 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "./screenshots/screenshot-mobile.png",
-      "sizes": "540x960",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Tela inicial"
+      "name": "Me Faltam",
+      "short_name": "Faltam",
+      "url": "./index.html#faltam",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Repetidas",
+      "short_name": "Repetidas",
+      "url": "./index.html#repetidas",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
