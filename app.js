@@ -112,3 +112,27 @@ $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.
 setupInstall();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
 persist();render();
+
+
+// Busca no topo
+(function(){
+const oldRenderBoards = renderBoards;
+renderBoards = function(){
+  oldRenderBoards();
+  const sr = document.getElementById('searchResults');
+  const gs = document.getElementById('groupSelector');
+  if(!sr || !gs) return;
+
+  if(query && query.trim()){
+    const html = document.getElementById('bingoGrid').innerHTML;
+    sr.style.display='block';
+    sr.innerHTML='<section class="section-card"><div class="section-head"><h2>🔎 Resultado da Busca</h2></div>'+html+'</section>';
+    document.getElementById('bingoGrid').innerHTML='';
+    gs.style.display='none';
+  }else{
+    sr.style.display='none';
+    sr.innerHTML='';
+    gs.style.display='grid';
+  }
+}
+})();
