@@ -1,4 +1,4 @@
-const CACHE='album-copa2026-pwa-android-fix-v2';
+const CACHE='album-copa2026-cc14-repetidas-x1-v1';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -14,7 +14,6 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
   event.respondWith(
     fetch(event.request, { cache: 'no-store' })
       .then(response => {
