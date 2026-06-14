@@ -83,3 +83,18 @@
     min-height:27px !important;
   }
 }
+
+
+/* MENU FINAL: Início, Voltar, Grupos, Faltam, Repetidas, Status */
+.bottom-nav{
+  grid-template-columns:repeat(6,1fr) !important;
+}
+
+/* Busca acima dos grupos */
+.tools-card{
+  margin-bottom:10px !important;
+}
+
+.group-section{
+  margin-top:0 !important;
+}
