@@ -128,3 +128,46 @@
     text-align:center;
   }
 }
+
+
+/* BOTÕES DE HISTÓRICO AO LADO DO NOME */
+.history-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.history-actions button,
+.history-upload{
+  border:0;
+  border-radius:12px;
+  padding:9px 12px;
+  font-weight:900;
+  font-size:13px;
+  cursor:pointer;
+  color:#fff;
+  background:#2563eb;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 20px rgba(37,99,235,.18);
+}
+.history-upload{
+  background:#22c55e;
+}
+.history-upload input{
+  display:none;
+}
+@media(max-width:560px){
+  .history-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+  }
+  .history-actions button,
+  .history-upload{
+    width:100%;
+    font-size:12px;
+    padding:10px 8px;
+  }
+}
