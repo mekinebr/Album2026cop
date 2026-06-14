@@ -27,29 +27,47 @@ function counts(list=stickers){const owned=list.filter(x=>qty(x.id)>0).length;co
 function groupItems(g){return stickers.filter(x=>x.group===g)}
 function teamItems(code){return stickers.filter(x=>x.code===code)}
 function parseExactStickerQuery(){
-  const raw=String(query||'').trim().toUpperCase();
-  const compact=raw.replace(/[^A-Z0-9]/g,'');
-  const m=compact.match(/^([A-Z]{2,3})(0?[0-9]{1,2})$/);
-  if(!m)return null;
-  const code=m[1];
-  let num=m[2];
-  if(code==='FWC' && num==='00') return {code, number:'00'};
-  num=String(parseInt(num,10));
-  if(!Number.isFinite(Number(num)))return null;
-  return {code, number:num};
-}
-function visibleSticker(x){
-  const exact=parseExactStickerQuery();
-  const st=getStatus(x.id);
-  const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');
-  if(!statusOk)return false;
+  const raw = String(query || '').trim().toUpperCase();
+  if(!raw) return null;
 
-  if(exact){
-    return String(x.code).toUpperCase()===exact.code && String(x.number)===exact.number;
+  // Aceita: BRA 1, BRA-1, BRA01, BRA 11, FWC 00, CC 2
+  const compact = raw.replace(/[^A-Z0-9]/g,'');
+  const m = compact.match(/^([A-Z]{2,3})(0?[0-9]{1,2})$/);
+  if(!m) return null;
+
+  const code = m[1];
+  let number = m[2];
+
+  if(code === 'FWC' && number === '00'){
+    return { code, number:'00' };
   }
 
-  const q=norm(query.trim());
-  if(!q)return true;
+  number = String(parseInt(number,10));
+  if(number === 'NaN') return null;
+
+  return { code, number };
+}
+
+function visibleSticker(x){
+  const st = getStatus(x.id);
+  const statusOk =
+    statusFilter === 'all' ||
+    st === statusFilter ||
+    (statusFilter === 'have' && st === 'repeat');
+
+  if(!statusOk) return false;
+
+  const exact = parseExactStickerQuery();
+
+  // Quando digitar BRA 1, mostra somente BRA 1.
+  // Quando digitar BRA 11, mostra somente BRA 11.
+  if(exact){
+    return String(x.code).toUpperCase() === exact.code &&
+           String(x.number) === exact.number;
+  }
+
+  const q = norm(query.trim());
+  if(!q) return true;
 
   return norm(x.team).includes(q) ||
          norm(x.code).includes(q) ||
@@ -63,18 +81,27 @@ function renderGroups(){const normal=Object.entries(GROUPS).map(([g,teams])=>{co
 function selectGroup(g){activeGroup=g;goView('groups',false);document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'})}
 
 function queryIsActive(){
-  return query.trim().length>0;
+  return query.trim().length > 0;
 }
+
 function teamMatchesSearch(code, team){
   if(!queryIsActive()) return true;
-  const q=norm(query.trim());
-  const items=teamItems(code);
+
+  const q = norm(query.trim());
+  const exact = parseExactStickerQuery();
+
+  if(exact){
+    return String(code).toUpperCase() === exact.code &&
+           teamItems(code).some(x => String(x.number) === exact.number);
+  }
+
   return norm(code).includes(q) ||
          norm(team).includes(q) ||
-         items.some(x=>visibleSticker(x));
+         teamItems(code).some(x => visibleSticker(x));
 }
+
 function allBoards(){
-  const arr=[];
+  const arr = [];
   Object.entries(GROUPS).forEach(([g,teams])=>{
     teams.forEach(([team,code])=>arr.push([team,code,g]));
   });
@@ -86,27 +113,67 @@ function boardsForActive(){
   if(queryIsActive()){
     return allBoards().filter(([team,code])=>teamMatchesSearch(code,team));
   }
-  if(activeGroup==='SPECIAL')return EXTRA_SECTIONS.map(s=>[s.name,s.code,'SPECIAL']);
+
+  if(activeGroup === 'SPECIAL'){
+    return EXTRA_SECTIONS.map(s=>[s.name,s.code,'SPECIAL']);
+  }
+
   return GROUPS[activeGroup].map(([team,code])=>[team,code,activeGroup]);
 }
 function startHold(id){holdFired=false;holdTimer=setTimeout(()=>{holdFired=true;resetSticker(id)},650)}
 function endHold(){clearTimeout(holdTimer)}
 function renderBoards(){
-  const teams=boardsForActive();
-  $('#bingoGrid').innerHTML=teams.map(([team,code,boardGroup])=>{
-    const items=teamItems(code),c=counts(items),pct=c.total?Math.round(c.owned/c.total*100):0;
-    const nums=items.sort((a,b)=>a.sort-b.sort).map(x=>{
-      const st=getStatus(x.id),hide=visibleSticker(x)?'':'hidden',q=qty(x.id);
-      return`<div class="num-wrap ${hide}"><button class="num-btn ${st}" onpointerdown="startHold('${x.id}')" onpointerup="endHold()" onpointerleave="endHold()" onclick="if(!holdFired)tapSticker('${x.id}')" title="${x.code} ${x.number}">${x.number}</button><span class="repeat-badge">${q>1?'x'+q:''}</span></div>`;
-    }).join('');
-    const any=items.some(visibleSticker);
-    const labelGroup = boardGroup==='SPECIAL'?'Especiais':'Grupo '+boardGroup;
-    return`<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}"><div class="team-head"><div><h3>${team}</h3><small>${code} · ${labelGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeatQty} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`;
+  const teams = boardsForActive();
+
+  $('#bingoGrid').innerHTML = teams.map(([team,code,boardGroup])=>{
+    const items = teamItems(code);
+    const c = counts(items);
+    const pct = c.total ? Math.round(c.owned / c.total * 100) : 0;
+
+    const nums = items
+      .sort((a,b)=>a.sort-b.sort)
+      .map(x=>{
+        const st = getStatus(x.id);
+        const hide = visibleSticker(x) ? '' : 'hidden';
+        const q = qty(x.id);
+
+        return `<div class="num-wrap ${hide}">
+          <button class="num-btn ${st}"
+            onpointerdown="startHold('${x.id}')"
+            onpointerup="endHold()"
+            onpointerleave="endHold()"
+            onclick="if(!holdFired)tapSticker('${x.id}')"
+            title="${x.code} ${x.number}">
+            ${x.number}
+          </button>
+          <span class="repeat-badge">${q>1?'x'+q:''}</span>
+        </div>`;
+      }).join('');
+
+    const any = items.some(visibleSticker);
+    const labelGroup = boardGroup === 'SPECIAL' ? 'Especiais' : 'Grupo ' + boardGroup;
+
+    return `<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}">
+      <div class="team-head">
+        <div>
+          <h3>${team}</h3>
+          <small>${code} · ${labelGroup}</small>
+        </div>
+        <div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeatQty} · ❌ ${c.missing}</div>
+      </div>
+      <div class="num-grid">${nums}</div>
+    </article>`;
   }).join('') || '<div class="notice">Nenhum resultado encontrado.</div>';
 
-  const c=queryIsActive()?counts(stickers.filter(visibleSticker)):counts(groupItems(activeGroup));
-  const title=queryIsActive()?`Busca: ${query}`:(activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup);
-  $('#activeInfo').innerHTML=`📌 <b>${title}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`;
+  const c = queryIsActive()
+    ? counts(stickers.filter(visibleSticker))
+    : counts(groupItems(activeGroup));
+
+  const title = queryIsActive()
+    ? `Busca: ${query}`
+    : (activeGroup === 'SPECIAL' ? 'Especiais' : 'Grupo ' + activeGroup);
+
+  $('#activeInfo').innerHTML = `📌 <b>${title}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`;
 }
 function groupedList(status){const order=[...Object.keys(GROUPS),'SPECIAL'];return order.map(g=>{const teams=(g==='SPECIAL'?EXTRA_SECTIONS.map(s=>[s.name,s.code]):GROUPS[g]);const blocks=teams.map(([team,code])=>{const arr=teamItems(code).filter(x=>getStatus(x.id)===status);if(!arr.length)return'';return`<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`}).join('');return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:''}).join('')||'<div class="notice">Nada por aqui.</div>'}
 function renderLists(){$('#missingPanel').innerHTML=groupedList('missing');$('#repeatPanel').innerHTML=groupedList('repeat')}
@@ -166,7 +233,9 @@ renderBoards = function(){
 })();
 
 
-/* BUSCA_EXATA_TOPO_FINAL */
+
+
+/* RESULTADO_DA_BUSCA_NO_TOPO */
 (function(){
   const originalRenderBoards = renderBoards;
   renderBoards = function(){
@@ -175,6 +244,7 @@ renderBoards = function(){
     const sr = document.getElementById('searchResults');
     const gs = document.getElementById('groupSelector');
     const bg = document.getElementById('bingoGrid');
+
     if(!sr || !gs || !bg) return;
 
     if(query && query.trim()){
