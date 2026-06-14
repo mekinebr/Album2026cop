@@ -396,6 +396,95 @@ function render(){
   persist();
 }
 
+
+
+/* HISTÓRICO: BAIXAR E CARREGAR DADOS ENTRE CELULARES */
+function buildHistoryBackup(){
+  return {
+    app: 'album-copa2026',
+    version: 6,
+    createdAt: new Date().toISOString(),
+    state: state || {},
+    daily: daily || {},
+    theme: localStorage.getItem('albumTheme') || 'light'
+  };
+}
+
+function downloadHistory(){
+  try{
+    persist();
+
+    const data = buildHistoryBackup();
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+
+    const date = new Date().toISOString().slice(0,10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historico-album-copa2026-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+    alert('Histórico baixado com sucesso!');
+  }catch(e){
+    alert('Não consegui baixar o histórico.');
+  }
+}
+
+async function loadHistoryFile(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    if(!data || data.app !== 'album-copa2026' || !data.state){
+      alert('Arquivo de histórico inválido.');
+      event.target.value='';
+      return;
+    }
+
+    const confirmLoad = confirm('Carregar este histórico vai substituir os dados atuais deste aparelho. Deseja continuar?');
+    if(!confirmLoad){
+      event.target.value='';
+      return;
+    }
+
+    Object.keys(state).forEach(k=>delete state[k]);
+    Object.assign(state, data.state || {});
+
+    Object.keys(daily).forEach(k=>delete daily[k]);
+    Object.assign(daily, data.daily || {});
+
+    if(data.theme){
+      localStorage.setItem('albumTheme', data.theme);
+      document.body.classList.toggle('dark', data.theme === 'dark');
+      const themeBtn = document.getElementById('themeBtn');
+      if(themeBtn) themeBtn.textContent = data.theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    persist();
+    render();
+    alert('Histórico carregado com sucesso!');
+  }catch(e){
+    alert('Erro ao carregar histórico. Verifique se o arquivo é o backup correto.');
+  }finally{
+    event.target.value='';
+  }
+}
+
+function setupHistoryButtons(){
+  const downloadBtn = document.getElementById('downloadHistoryBtn');
+  const uploadInput = document.getElementById('uploadHistoryInput');
+
+  if(downloadBtn) downloadBtn.addEventListener('click', downloadHistory);
+  if(uploadInput) uploadInput.addEventListener('change', loadHistoryFile);
+}
+
+
 function init(){
   const search=$('#searchInput');
   if(search)search.addEventListener('input',e=>{query=e.target.value;renderBoards()});
@@ -429,6 +518,7 @@ function init(){
   $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
 
   setupInstall();
+  setupHistoryButtons();
   persist();
   render();
 }
