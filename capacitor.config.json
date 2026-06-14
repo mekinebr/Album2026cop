@@ -1,11 +1,6 @@
 {
-  "name": "album2026",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "@capacitor/core": "^7.4.2",
-    "@capacitor/android": "^7.4.2",
-    "@capacitor/cli": "^7.4.2",
-    "typescript": "^5.6.3"
-  }
+  "appId": "com.mekinebr.album2026",
+  "appName": "Álbum Copa 2026",
+  "webDir": "www",
+  "bundledWebRuntime": false
 }
