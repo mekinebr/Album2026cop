@@ -31,12 +31,55 @@ function goView(v,push=true){if(push&&currentView!==v)viewStack.push(v);currentV
 function goBack(){if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}else goView('groups',false)}
 function renderDashboard(){const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;$('#haveCount').textContent=c.owned;$('#missingCount').textContent=c.missing;$('#repeatCount').textContent=c.repeatQty;$('#totalCount').textContent=c.total}
 function groupSummaryHTML(g,teams){if(g==='SPECIAL')return `<div class="group-codes"><span class="sig-code">FWC</span><span class="sig-code">CC</span></div>`;return `<div class="group-codes">${teams.map(([team,code])=>`<span class="sig-code">${code}</span>`).join('')}</div>`}
-function renderGroups(){const normal=Object.entries(GROUPS).map(([g,teams])=>{const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;return`<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">${groupSummaryHTML(g,teams)}<b>Grupo ${g}</b><br><small>✅ ${c.owned}/${c.total} · ${p}%</small></button>`}).join('');const sp=counts(groupItems('SPECIAL')),pp=sp.total?Math.round(sp.owned/sp.total*100):0;$('#groupSelector').innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">${groupSummaryHTML('SPECIAL',[])}<b>⭐ Especiais</b><br><small>✅ ${sp.owned}/${sp.total} · ${pp}%</small></button>`}
+function renderGroups(){const normal=Object.entries(GROUPS).map(([g,teams])=>{const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;return`<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">${groupSummaryHTML(g,teams)}<div class="group-info"><b>Grupo ${g}</b><small>✅ ${c.owned}/${c.total}<br>${p}%</small></div></button>`}).join('');const sp=counts(groupItems('SPECIAL')),pp=sp.total?Math.round(sp.owned/sp.total*100):0;$('#groupSelector').innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">${groupSummaryHTML('SPECIAL',[])}<div class="group-info"><b>⭐ Especiais</b><small>✅ ${sp.owned}/${sp.total}<br>${pp}%</small></div></button>`}
 function selectGroup(g){activeGroup=g;goView('groups',false);document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'})}
-function boardsForActive(){if(activeGroup==='SPECIAL')return EXTRA_SECTIONS.map(s=>[s.name,s.code]);return GROUPS[activeGroup]}
+
+function queryIsActive(){
+  return query.trim().length>0;
+}
+function teamMatchesSearch(code, team){
+  if(!queryIsActive()) return true;
+  const q=norm(query.trim());
+  const items=teamItems(code);
+  return norm(code).includes(q) ||
+         norm(team).includes(q) ||
+         items.some(x=>visibleSticker(x));
+}
+function allBoards(){
+  const arr=[];
+  Object.entries(GROUPS).forEach(([g,teams])=>{
+    teams.forEach(([team,code])=>arr.push([team,code,g]));
+  });
+  EXTRA_SECTIONS.forEach(s=>arr.push([s.name,s.code,'SPECIAL']));
+  return arr;
+}
+
+function boardsForActive(){
+  if(queryIsActive()){
+    return allBoards().filter(([team,code])=>teamMatchesSearch(code,team));
+  }
+  if(activeGroup==='SPECIAL')return EXTRA_SECTIONS.map(s=>[s.name,s.code,'SPECIAL']);
+  return GROUPS[activeGroup].map(([team,code])=>[team,code,activeGroup]);
+}
 function startHold(id){holdFired=false;holdTimer=setTimeout(()=>{holdFired=true;resetSticker(id)},650)}
 function endHold(){clearTimeout(holdTimer)}
-function renderBoards(){const teams=boardsForActive();$('#bingoGrid').innerHTML=teams.map(([team,code])=>{const items=teamItems(code),c=counts(items),pct=c.total?Math.round(c.owned/c.total*100):0;const nums=items.sort((a,b)=>a.sort-b.sort).map(x=>{const st=getStatus(x.id),hide=visibleSticker(x)?'':'hidden',q=qty(x.id);return`<div class="num-wrap ${hide}"><button class="num-btn ${st}" onpointerdown="startHold('${x.id}')" onpointerup="endHold()" onpointerleave="endHold()" onclick="if(!holdFired)tapSticker('${x.id}')" title="${x.code} ${x.number}">${x.number}</button><span class="repeat-badge">${q>1?'x'+q:''}</span></div>`}).join('');const any=items.some(visibleSticker);return`<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}"><div class="team-head"><div><h3>${team}</h3><small>${code} · ${activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeatQty} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`}).join('');const c=counts(groupItems(activeGroup));$('#activeInfo').innerHTML=`📌 <b>${activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`}
+function renderBoards(){
+  const teams=boardsForActive();
+  $('#bingoGrid').innerHTML=teams.map(([team,code,boardGroup])=>{
+    const items=teamItems(code),c=counts(items),pct=c.total?Math.round(c.owned/c.total*100):0;
+    const nums=items.sort((a,b)=>a.sort-b.sort).map(x=>{
+      const st=getStatus(x.id),hide=visibleSticker(x)?'':'hidden',q=qty(x.id);
+      return`<div class="num-wrap ${hide}"><button class="num-btn ${st}" onpointerdown="startHold('${x.id}')" onpointerup="endHold()" onpointerleave="endHold()" onclick="if(!holdFired)tapSticker('${x.id}')" title="${x.code} ${x.number}">${x.number}</button><span class="repeat-badge">${q>1?'x'+q:''}</span></div>`;
+    }).join('');
+    const any=items.some(visibleSticker);
+    const labelGroup = boardGroup==='SPECIAL'?'Especiais':'Grupo '+boardGroup;
+    return`<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}"><div class="team-head"><div><h3>${team}</h3><small>${code} · ${labelGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeatQty} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`;
+  }).join('') || '<div class="notice">Nenhum resultado encontrado.</div>';
+
+  const c=queryIsActive()?counts(stickers.filter(visibleSticker)):counts(groupItems(activeGroup));
+  const title=queryIsActive()?`Busca: ${query}`:(activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup);
+  $('#activeInfo').innerHTML=`📌 <b>${title}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`;
+}
 function groupedList(status){const order=[...Object.keys(GROUPS),'SPECIAL'];return order.map(g=>{const teams=(g==='SPECIAL'?EXTRA_SECTIONS.map(s=>[s.name,s.code]):GROUPS[g]);const blocks=teams.map(([team,code])=>{const arr=teamItems(code).filter(x=>getStatus(x.id)===status);if(!arr.length)return'';return`<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`}).join('');return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:''}).join('')||'<div class="notice">Nada por aqui.</div>'}
 function renderLists(){$('#missingPanel').innerHTML=groupedList('missing');$('#repeatPanel').innerHTML=groupedList('repeat')}
 function renderStats(){const teams=stickers.reduce((acc,x)=>{acc[x.code]=acc[x.code]||{team:x.team,code:x.code,group:x.group,total:0,owned:0,repeatQty:0};acc[x.code].total++;if(qty(x.id)>0)acc[x.code].owned++;acc[x.code].repeatQty+=Math.max(0,qty(x.id)-1);return acc},{});const arr=Object.values(teams).map(t=>({...t,pct:Math.round(t.owned/t.total*100)}));const most=[...arr].sort((a,b)=>b.pct-a.pct||b.owned-a.owned).slice(0,10);const least=[...arr].sort((a,b)=>a.pct-b.pct||a.owned-b.owned).slice(0,10);const maxDay=Math.max(1,...Object.values(daily));const days=Object.entries(daily).slice(-14).reverse();$('#statsPanel').innerHTML=`<div class="stats-card"><h3>10 mais completas</h3>${most.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>10 menos completas</h3>${least.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`}
