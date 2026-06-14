@@ -8,11 +8,6 @@
   "orientation": "portrait",
   "background_color": "#f3f6fb",
   "theme_color": "#22c55e",
-  "categories": [
-    "sports",
-    "utilities"
-  ],
-  "lang": "pt-BR",
   "icons": [
     {
       "src": "./icons/icon-192.png",
@@ -25,15 +20,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "./screenshots/screenshot-mobile.png",
-      "sizes": "540x960",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Tela inicial do Álbum Copa 2026"
     }
   ]
 }
