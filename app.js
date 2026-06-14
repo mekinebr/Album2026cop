@@ -2,7 +2,7 @@ const GROUPS={"A": [["México", "MEX"], ["África do Sul", "RSA"], ["República 
 const TOTAL_PER_TEAM=20;
 const EXTRA_SECTIONS=[
   {key:'FWC',name:'Figurinhas FWC',group:'Especiais',code:'FWC',numbers:['00',...Array.from({length:19},(_,i)=>String(i+1))]},
-  {key:'CC',name:'Coca-Cola',group:'Especiais',code:'CC',numbers:Array.from({length:8},(_,i)=>String(i+1))}
+  {key:'CC',name:'Coca-Cola',group:'Especiais',code:'CC',numbers:Array.from({length:14},(_,i)=>String(i+1))}
 ];
 
 const OLD_STATE=JSON.parse(localStorage.getItem('albumBingo2026StatusV2')||'{}');
@@ -257,7 +257,7 @@ function renderBoards(){
           title="${x.code} ${x.number}">
           ${x.number}
         </button>
-        <span class="repeat-badge">${q>1?'x'+q:''}</span>
+        <span class="repeat-badge">${q>1?'x'+(q-1):''}</span>
       </div>`;
     }).join('');
 
@@ -303,7 +303,7 @@ function groupedList(status){
     const blocks=teams.map(([team,code])=>{
       const arr=teamItems(code).filter(x=>getStatus(x.id)===status);
       if(!arr.length)return '';
-      return `<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`;
+      return `<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''}</span>`).join('')}</div></div>`;
     }).join('');
     return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:'';
   }).join('')||'<div class="notice">Nada por aqui.</div>';
@@ -338,7 +338,7 @@ function renderStats(){
 }
 
 function listTextByStatus(status){
-  return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''} - ${x.team}`).join('\n');
+  return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''} - ${x.team}`).join('\n');
 }
 function missingText(){return listTextByStatus('missing')||'Nenhuma faltando.'}
 function repeatText(){return listTextByStatus('repeat')||'Nenhuma repetida.'}
