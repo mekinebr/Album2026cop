@@ -6,6 +6,7 @@
 <title>Álbum Copa 2026</title>
 <link rel="stylesheet" href="./style.css?v=v5-final"/>
 <link rel="manifest" href="./manifest.json"/>
+<link rel="apple-touch-icon" href="./icons/icon-192.png"/>
 </head>
 <body>
 <main class="app-shell">
@@ -21,7 +22,7 @@
 </a>
 
 <section class="install-card">
-  <div><b>📲 Usar como aplicativo</b><p>Os dados salvam automaticamente no aparelho. Use backup antes de trocar de celular.</p></div>
+  <div><b>📲 Usar como aplicativo</b><p>Os dados ficam salvos automaticamente no aparelho.</p></div>
   <button id="installBtn">Instalar</button>
 </section>
 
@@ -42,16 +43,23 @@
 </section>
 
 <section id="view-groups" class="app-view active">
-<section class="section-card group-section"><div class="section-head"><h2>Escolha o grupo</h2><p>Agora aparece somente as siglas das 4 seleções.</p></div><div id="groupSelector" class="group-selector"></div></section>
 <section class="tools-card"><input id="searchInput" placeholder="Buscar global: BRA 11, Brasil, FWC 00, CC 2..."/><select id="statusFilter"><option value="all">Todos</option><option value="missing">Me falta</option><option value="have">Tenho</option><option value="repeat">Repetidas</option></select><button id="clearGroupBtn" class="ghost">Limpar</button></section>
+<section class="section-card group-section"><div class="section-head"><h2>Escolha o grupo</h2><p>Agora aparece somente as siglas das 4 seleções.</p></div><div id="groupSelector" class="group-selector"></div></section>
+
 <section id="activeInfo" class="active-info"></section><section id="bingoGrid" class="bingo-grid"></section>
 </section>
 
 <section id="view-missing" class="app-view"><section class="section-card"><div class="section-head"><h2>❌ Me falta</h2><p>Por grupo e seleção.</p></div><div class="trade-actions"><button id="copyMissingBtn" class="ghost">📋 Copiar Me Faltam</button><button id="shareMissingBtn">📲 WhatsApp Me Faltam</button></div><div id="missingPanel" class="list-panel"></div></section></section>
 <section id="view-repeats" class="app-view"><section class="section-card"><div class="section-head"><h2>🔁 Repetidas</h2><p>Quantidade ilimitada: x2, x3, x4...</p></div><div class="trade-actions"><button id="copyRepeatsBtn" class="ghost">📋 Copiar Repetidas</button><button id="shareRepeatsBtn">📲 WhatsApp Repetidas</button></div><div id="repeatPanel" class="list-panel"></div></section></section>
 <section id="view-stats" class="app-view"><section class="section-card"><div class="section-head"><h2>📊 Estatísticas</h2><p>Top 10, menos completas e colagens por dia.</p></div><div id="statsPanel" class="stats-panel"></div></section></section>
-<section id="view-backup" class="app-view"><section class="section-card"><div class="section-head"><h2>💾 Backup</h2><p>Os dados salvam automaticamente. O backup é só para trocar de celular ou evitar perda.</p></div><div class="backup-actions"><button id="exportBackupBtn">📤 Exportar Backup</button><label class="file-btn">📥 Importar Backup<input id="importBackupInput" type="file" accept="application/json"></label></div></section></section>
 </main>
-<nav class="bottom-nav"><button id="backBtn">⬅️<span>Voltar</span></button><button data-view="groups" class="active">🔢<span>Grupos</span></button><button data-view="missing">❌<span>Faltam</span></button><button data-view="repeats">🔁<span>Repetidas</span></button><button data-view="stats">📊<span>Status</span></button><button data-view="backup">💾<span>Backup</span></button></nav>
+<nav class="bottom-nav">
+  <button data-view="groups" class="active">🏠<span>Início</span></button>
+  <button id="backBtn">⬅️<span>Voltar</span></button>
+  <button data-view="groups">🔢<span>Grupos</span></button>
+  <button data-view="missing">❌<span>Faltam</span></button>
+  <button data-view="repeats">🔁<span>Repetidas</span></button>
+  <button data-view="stats">📊<span>Status</span></button>
+</nav>
 <script src="./app.js?v=v5-final"></script>
 </body></html>
