@@ -165,3 +165,30 @@
     width:100%;
   }
 }
+
+.install-help{
+  background:#fff7ed;
+  border:1px solid #fdba74;
+  border-radius:18px;
+  padding:12px;
+  margin-bottom:10px;
+  color:#7c2d12;
+  box-shadow:var(--shadow);
+}
+body.dark .install-help{
+  background:#2b1d10;
+  color:#fed7aa;
+  border-color:#9a3412;
+}
+.install-help p{
+  margin:6px 0;
+  font-size:14px;
+}
+.install-help small{
+  display:block;
+  font-size:12px;
+  opacity:.9;
+}
+#installBtn[disabled]{
+  opacity:.65;
+}
