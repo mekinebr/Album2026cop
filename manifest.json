@@ -2,8 +2,8 @@
   "name": "Álbum Copa 2026",
   "short_name": "Álbum 2026",
   "description": "Controle de figurinhas da Copa do Mundo 2026 com faltantes, repetidas, estatísticas e histórico.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "display_override": [
     "standalone",
@@ -54,5 +54,6 @@
         }
       ]
     }
-  ]
+  ],
+  "id": "/"
 }
