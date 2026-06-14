@@ -104,10 +104,10 @@ $('#copyMissingBtn').addEventListener('click',()=>copyText(missingShareText(),'L
 $('#shareMissingBtn').addEventListener('click',()=>shareWhatsText(missingShareText()));
 $('#copyRepeatsBtn').addEventListener('click',()=>copyText(repeatShareText(),'Lista de repetidas copiada!'));
 $('#shareRepeatsBtn').addEventListener('click',()=>shareWhatsText(repeatShareText()));
-$('#exportBackupBtn').addEventListener('click',exportBackup);
-$('#importBackupInput').addEventListener('change',importBackup);
+const exportBackupBtn=$('#exportBackupBtn'); if(exportBackupBtn) exportBackupBtn.addEventListener('click',exportBackup);
+const importBackupInput=$('#importBackupInput'); if(importBackupInput) importBackupInput.addEventListener('change',importBackup);
 $('#backBtn').addEventListener('click',goBack);
-$$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
+$$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{goView(btn.dataset.view); $$('.bottom-nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active')}));
 $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
 setupInstall();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
