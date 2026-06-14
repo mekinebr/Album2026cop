@@ -26,7 +26,35 @@ function clearSearchAfterMark(){if(query){query='';$('#searchInput').value='';st
 function counts(list=stickers){const owned=list.filter(x=>qty(x.id)>0).length;const repeatQty=list.reduce((s,x)=>s+Math.max(0,qty(x.id)-1),0);const missing=list.length-owned;return{owned,repeatQty,missing,total:list.length}}
 function groupItems(g){return stickers.filter(x=>x.group===g)}
 function teamItems(code){return stickers.filter(x=>x.code===code)}
-function visibleSticker(x){const q=norm(query.trim()),st=getStatus(x.id);const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');const queryOk=!q||norm(x.team).includes(q)||norm(x.code).includes(q)||norm(x.groupName).includes(q)||norm(`${x.code} ${x.number}`).includes(q)||norm(`${x.code}${x.number}`).includes(q);return statusOk&&queryOk}
+function parseExactStickerQuery(){
+  const raw=String(query||'').trim().toUpperCase();
+  const compact=raw.replace(/[^A-Z0-9]/g,'');
+  const m=compact.match(/^([A-Z]{2,3})(0?[0-9]{1,2})$/);
+  if(!m)return null;
+  const code=m[1];
+  let num=m[2];
+  if(code==='FWC' && num==='00') return {code, number:'00'};
+  num=String(parseInt(num,10));
+  if(!Number.isFinite(Number(num)))return null;
+  return {code, number:num};
+}
+function visibleSticker(x){
+  const exact=parseExactStickerQuery();
+  const st=getStatus(x.id);
+  const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');
+  if(!statusOk)return false;
+
+  if(exact){
+    return String(x.code).toUpperCase()===exact.code && String(x.number)===exact.number;
+  }
+
+  const q=norm(query.trim());
+  if(!q)return true;
+
+  return norm(x.team).includes(q) ||
+         norm(x.code).includes(q) ||
+         norm(x.groupName).includes(q);
+}
 function goView(v,push=true){if(push&&currentView!==v)viewStack.push(v);currentView=v;$$('.app-view').forEach(el=>el.classList.remove('active'));$('#view-'+v).classList.add('active');$$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();scrollTo({top:0,behavior:'smooth'})}
 function goBack(){if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}else goView('groups',false)}
 function renderDashboard(){const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;$('#haveCount').textContent=c.owned;$('#missingCount').textContent=c.missing;$('#repeatCount').textContent=c.repeatQty;$('#totalCount').textContent=c.total}
@@ -135,4 +163,30 @@ renderBoards = function(){
     gs.style.display='grid';
   }
 }
+})();
+
+
+/* BUSCA_EXATA_TOPO_FINAL */
+(function(){
+  const originalRenderBoards = renderBoards;
+  renderBoards = function(){
+    originalRenderBoards();
+
+    const sr = document.getElementById('searchResults');
+    const gs = document.getElementById('groupSelector');
+    const bg = document.getElementById('bingoGrid');
+    if(!sr || !gs || !bg) return;
+
+    if(query && query.trim()){
+      const html = bg.innerHTML || '<div class="notice">Nenhum resultado encontrado.</div>';
+      sr.style.display='block';
+      sr.innerHTML='<section class="section-card"><div class="section-head"><h2>🔎 Resultado da Busca</h2><p>Após marcar, a busca limpa automaticamente.</p></div>'+html+'</section>';
+      bg.innerHTML='';
+      gs.style.display='none';
+    }else{
+      sr.style.display='none';
+      sr.innerHTML='';
+      gs.style.display='grid';
+    }
+  };
 })();
