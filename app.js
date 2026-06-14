@@ -22,30 +22,41 @@ function getStatus(id){const q=qty(id);return q===0?'missing':q===1?'have':'repe
 function setQty(id,q){const old=qty(id);if(q<=0)delete state[id];else state[id]=q;if(old===0&&q>0)daily[todayKey()]=(daily[todayKey()]||0)+1;persist();render()}
 function tapSticker(id){setQty(id,qty(id)+1);clearSearchAfterMark()}
 function resetSticker(id){setQty(id,0);clearSearchAfterMark()}
-function clearSearchAfterMark(){if(query){query='';$('#searchInput').value='';statusFilter='all';$('#statusFilter').value='all';setTimeout(()=>$('#searchInput').focus(),50)}}
+function clearSearchAfterMark(){
+  if(query){
+    query='';
+    $('#searchInput').value='';
+    statusFilter='all';
+    $('#statusFilter').value='all';
+    renderBoards();
+    setTimeout(()=>$('#searchInput').focus(),50);
+  }
+}}
 function counts(list=stickers){const owned=list.filter(x=>qty(x.id)>0).length;const repeatQty=list.reduce((s,x)=>s+Math.max(0,qty(x.id)-1),0);const missing=list.length-owned;return{owned,repeatQty,missing,total:list.length}}
 function groupItems(g){return stickers.filter(x=>x.group===g)}
 function teamItems(code){return stickers.filter(x=>x.code===code)}
-function parseExactStickerQuery(){
-  const raw = String(query || '').trim().toUpperCase();
-  if(!raw) return null;
+function parseSearch(){
+  const raw = String(query || '').trim();
+  if(!raw) return {type:'empty'};
 
-  // Aceita: BRA 1, BRA-1, BRA01, BRA 11, FWC 00, CC 2
-  const compact = raw.replace(/[^A-Z0-9]/g,'');
-  const m = compact.match(/^([A-Z]{2,3})(0?[0-9]{1,2})$/);
-  if(!m) return null;
+  const upper = raw.toUpperCase().replace(/\s+/g,' ').trim();
+  const compact = upper.replace(/[^A-Z0-9]/g,'');
 
-  const code = m[1];
-  let number = m[2];
+  // Busca exata: BRA 1, BRA-1, BRA01, BRA 11, FWC 00, CC 2
+  const exact = compact.match(/^([A-Z]{2,3})(0?[0-9]{1,2})$/);
+  if(exact){
+    const code = exact[1];
+    let number = exact[2];
 
-  if(code === 'FWC' && number === '00'){
-    return { code, number:'00' };
+    if(code === 'FWC' && number === '00'){
+      return {type:'exact', code, number:'00'};
+    }
+
+    number = String(parseInt(number,10));
+    return {type:'exact', code, number};
   }
 
-  number = String(parseInt(number,10));
-  if(number === 'NaN') return null;
-
-  return { code, number };
+  return {type:'text', text:norm(raw)};
 }
 
 function visibleSticker(x){
@@ -57,47 +68,22 @@ function visibleSticker(x){
 
   if(!statusOk) return false;
 
-  const exact = parseExactStickerQuery();
+  const s = parseSearch();
 
-  // Quando digitar BRA 1, mostra somente BRA 1.
-  // Quando digitar BRA 11, mostra somente BRA 11.
-  if(exact){
-    return String(x.code).toUpperCase() === exact.code &&
-           String(x.number) === exact.number;
+  if(s.type === 'empty') return true;
+
+  if(s.type === 'exact'){
+    return String(x.code).toUpperCase() === s.code &&
+           String(x.number) === s.number;
   }
 
-  const q = norm(query.trim());
-  if(!q) return true;
-
-  return norm(x.team).includes(q) ||
-         norm(x.code).includes(q) ||
-         norm(x.groupName).includes(q);
+  return norm(x.team).includes(s.text) ||
+         norm(x.code).includes(s.text) ||
+         norm(x.groupName).includes(s.text);
 }
-function goView(v,push=true){if(push&&currentView!==v)viewStack.push(v);currentView=v;$$('.app-view').forEach(el=>el.classList.remove('active'));$('#view-'+v).classList.add('active');$$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();scrollTo({top:0,behavior:'smooth'})}
-function goBack(){if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}else goView('groups',false)}
-function renderDashboard(){const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;$('#haveCount').textContent=c.owned;$('#missingCount').textContent=c.missing;$('#repeatCount').textContent=c.repeatQty;$('#totalCount').textContent=c.total}
-function groupSummaryHTML(g,teams){if(g==='SPECIAL')return `<div class="group-codes"><span class="sig-code">FWC</span><span class="sig-code">CC</span></div>`;return `<div class="group-codes">${teams.map(([team,code])=>`<span class="sig-code">${code}</span>`).join('')}</div>`}
-function renderGroups(){const normal=Object.entries(GROUPS).map(([g,teams])=>{const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;return`<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">${groupSummaryHTML(g,teams)}<div class="group-info"><b>Grupo ${g}</b><small>✅ ${c.owned}/${c.total}<br>${p}%</small></div></button>`}).join('');const sp=counts(groupItems('SPECIAL')),pp=sp.total?Math.round(sp.owned/sp.total*100):0;$('#groupSelector').innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">${groupSummaryHTML('SPECIAL',[])}<div class="group-info"><b>⭐ Especiais</b><small>✅ ${sp.owned}/${sp.total}<br>${pp}%</small></div></button>`}
-function selectGroup(g){activeGroup=g;goView('groups',false);document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'})}
 
 function queryIsActive(){
-  return query.trim().length > 0;
-}
-
-function teamMatchesSearch(code, team){
-  if(!queryIsActive()) return true;
-
-  const q = norm(query.trim());
-  const exact = parseExactStickerQuery();
-
-  if(exact){
-    return String(code).toUpperCase() === exact.code &&
-           teamItems(code).some(x => String(x.number) === exact.number);
-  }
-
-  return norm(code).includes(q) ||
-         norm(team).includes(q) ||
-         teamItems(code).some(x => visibleSticker(x));
+  return parseSearch().type !== 'empty';
 }
 
 function allBoards(){
@@ -107,6 +93,21 @@ function allBoards(){
   });
   EXTRA_SECTIONS.forEach(s=>arr.push([s.name,s.code,'SPECIAL']));
   return arr;
+}
+
+function teamMatchesSearch(code, team){
+  const s = parseSearch();
+
+  if(s.type === 'empty') return true;
+
+  if(s.type === 'exact'){
+    return String(code).toUpperCase() === s.code &&
+           teamItems(code).some(x=>String(x.number) === s.number);
+  }
+
+  return norm(code).includes(s.text) ||
+         norm(team).includes(s.text) ||
+         teamItems(code).some(visibleSticker);
 }
 
 function boardsForActive(){
@@ -120,12 +121,13 @@ function boardsForActive(){
 
   return GROUPS[activeGroup].map(([team,code])=>[team,code,activeGroup]);
 }
+
 function startHold(id){holdFired=false;holdTimer=setTimeout(()=>{holdFired=true;resetSticker(id)},650)}
 function endHold(){clearTimeout(holdTimer)}
 function renderBoards(){
   const teams = boardsForActive();
 
-  $('#bingoGrid').innerHTML = teams.map(([team,code,boardGroup])=>{
+  const html = teams.map(([team,code,boardGroup])=>{
     const items = teamItems(code);
     const c = counts(items);
     const pct = c.total ? Math.round(c.owned / c.total * 100) : 0;
@@ -151,9 +153,11 @@ function renderBoards(){
       }).join('');
 
     const any = items.some(visibleSticker);
+    if(!any) return '';
+
     const labelGroup = boardGroup === 'SPECIAL' ? 'Especiais' : 'Grupo ' + boardGroup;
 
-    return `<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}">
+    return `<article class="team-board ${pct===100?'complete':''}">
       <div class="team-head">
         <div>
           <h3>${team}</h3>
@@ -165,6 +169,32 @@ function renderBoards(){
     </article>`;
   }).join('') || '<div class="notice">Nenhum resultado encontrado.</div>';
 
+  const sr = document.getElementById('searchResults');
+  const gs = document.getElementById('groupSelector');
+  const bg = document.getElementById('bingoGrid');
+
+  if(queryIsActive()){
+    if(sr){
+      sr.style.display = 'block';
+      sr.innerHTML = `<section class="section-card">
+        <div class="section-head">
+          <h2>🔎 Resultado da Busca</h2>
+          <p>Após marcar, a busca limpa automaticamente.</p>
+        </div>
+        ${html}
+      </section>`;
+    }
+    if(gs) gs.style.display = 'none';
+    if(bg) bg.innerHTML = '';
+  }else{
+    if(sr){
+      sr.style.display = 'none';
+      sr.innerHTML = '';
+    }
+    if(gs) gs.style.display = 'grid';
+    if(bg) bg.innerHTML = html;
+  }
+
   const c = queryIsActive()
     ? counts(stickers.filter(visibleSticker))
     : counts(groupItems(activeGroup));
@@ -175,6 +205,7 @@ function renderBoards(){
 
   $('#activeInfo').innerHTML = `📌 <b>${title}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`;
 }
+
 function groupedList(status){const order=[...Object.keys(GROUPS),'SPECIAL'];return order.map(g=>{const teams=(g==='SPECIAL'?EXTRA_SECTIONS.map(s=>[s.name,s.code]):GROUPS[g]);const blocks=teams.map(([team,code])=>{const arr=teamItems(code).filter(x=>getStatus(x.id)===status);if(!arr.length)return'';return`<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`}).join('');return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:''}).join('')||'<div class="notice">Nada por aqui.</div>'}
 function renderLists(){$('#missingPanel').innerHTML=groupedList('missing');$('#repeatPanel').innerHTML=groupedList('repeat')}
 function renderStats(){const teams=stickers.reduce((acc,x)=>{acc[x.code]=acc[x.code]||{team:x.team,code:x.code,group:x.group,total:0,owned:0,repeatQty:0};acc[x.code].total++;if(qty(x.id)>0)acc[x.code].owned++;acc[x.code].repeatQty+=Math.max(0,qty(x.id)-1);return acc},{});const arr=Object.values(teams).map(t=>({...t,pct:Math.round(t.owned/t.total*100)}));const most=[...arr].sort((a,b)=>b.pct-a.pct||b.owned-a.owned).slice(0,10);const least=[...arr].sort((a,b)=>a.pct-b.pct||a.owned-b.owned).slice(0,10);const maxDay=Math.max(1,...Object.values(daily));const days=Object.entries(daily).slice(-14).reverse();$('#statsPanel').innerHTML=`<div class="stats-card"><h3>10 mais completas</h3>${most.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>10 menos completas</h3>${least.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`}
@@ -235,28 +266,3 @@ renderBoards = function(){
 
 
 
-/* RESULTADO_DA_BUSCA_NO_TOPO */
-(function(){
-  const originalRenderBoards = renderBoards;
-  renderBoards = function(){
-    originalRenderBoards();
-
-    const sr = document.getElementById('searchResults');
-    const gs = document.getElementById('groupSelector');
-    const bg = document.getElementById('bingoGrid');
-
-    if(!sr || !gs || !bg) return;
-
-    if(query && query.trim()){
-      const html = bg.innerHTML || '<div class="notice">Nenhum resultado encontrado.</div>';
-      sr.style.display='block';
-      sr.innerHTML='<section class="section-card"><div class="section-head"><h2>🔎 Resultado da Busca</h2><p>Após marcar, a busca limpa automaticamente.</p></div>'+html+'</section>';
-      bg.innerHTML='';
-      gs.style.display='none';
-    }else{
-      sr.style.display='none';
-      sr.innerHTML='';
-      gs.style.display='grid';
-    }
-  };
-})();
