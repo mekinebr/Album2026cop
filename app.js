@@ -376,14 +376,36 @@ async function importBackup(e){
 }
 
 function setupInstall(){
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
+  let installReady=false;
+
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    deferredInstallPrompt=e;
+    installReady=true;
+    const btn=$('#installBtn');
+    if(btn)btn.style.display='inline-flex';
+  });
+
   const btn=$('#installBtn');
   if(btn)btn.addEventListener('click',async()=>{
     if(deferredInstallPrompt){
       deferredInstallPrompt.prompt();
       await deferredInstallPrompt.userChoice;
       deferredInstallPrompt=null;
-    }else alert('No Android: Chrome → 3 pontinhos → Instalar aplicativo ou Adicionar à tela inicial.');
+      return;
+    }
+
+    const ua=navigator.userAgent.toLowerCase();
+    const isIOS=/iphone|ipad|ipod/.test(ua);
+    const isAndroid=/android/.test(ua);
+
+    if(isIOS){
+      alert('No iPhone: abra no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início.');
+    }else if(isAndroid){
+      alert('No Android: abra no Chrome, toque nos 3 pontinhos e escolha Instalar aplicativo ou Adicionar à tela inicial.');
+    }else{
+      alert('No PC: abra no Chrome ou Edge e clique no ícone de instalar na barra de endereço.');
+    }
   });
 }
 
