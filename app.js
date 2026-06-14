@@ -1,195 +1,67 @@
-const GROUPS={"A":[["México","MEX"],["África do Sul","RSA"],["República da Coreia","KOR"],["Tchéquia","CZE"]],"B":[["Canadá","CAN"],["Bósnia e Herzegovina","BIH"],["Catar","QAT"],["Suíça","SUI"]],"C":[["Brasil","BRA"],["Marrocos","MAR"],["Haiti","HAI"],["Escócia","SCO"]],"D":[["EUA","USA"],["Paraguai","PAR"],["Austrália","AUS"],["Turquia","TUR"]],"E":[["Alemanha","GER"],["Curaçau","CUW"],["Costa do Marfim","CIV"],["Equador","ECU"]],"F":[["Holanda","NED"],["Japão","JPN"],["Suécia","SWE"],["Tunísia","TUN"]],"G":[["Bélgica","BEL"],["Egito","EGY"],["Irã","IRN"],["Nova Zelândia","NZL"]],"H":[["Espanha","ESP"],["Cabo Verde","CPV"],["Arábia Saudita","KSA"],["Uruguai","URU"]],"I":[["França","FRA"],["Senegal","SEN"],["Iraque","IRQ"],["Noruega","NOR"]],"J":[["Argentina","ARG"],["Argélia","ALG"],["Áustria","AUT"],["Jordânia","JOR"]],"K":[["Portugal","POR"],["RD do Congo","COD"],["Uzbequistão","UZB"],["Colômbia","COL"]],"L":[["Inglaterra","ENG"],["Croácia","CRO"],["Gana","GHA"],["Panamá","PAN"]]};
-const TOTAL_PER_TEAM=20;
-const state=JSON.parse(localStorage.getItem('albumBingo2026StatusV2')||'{}');
+const GROUPS={"A": [["México", "MEX", "🇲🇽"], ["África do Sul", "RSA", "🇿🇦"], ["República da Coreia", "KOR", "🇰🇷"], ["Tchéquia", "CZE", "🇨🇿"]], "B": [["Canadá", "CAN", "🇨🇦"], ["Bósnia e Herzegovina", "BIH", "🇧🇦"], ["Catar", "QAT", "🇶🇦"], ["Suíça", "SUI", "🇨🇭"]], "C": [["Brasil", "BRA", "🇧🇷"], ["Marrocos", "MAR", "🇲🇦"], ["Haiti", "HAI", "🇭🇹"], ["Escócia", "SCO", "🏴"]], "D": [["EUA", "USA", "🇺🇸"], ["Paraguai", "PAR", "🇵🇾"], ["Austrália", "AUS", "🇦🇺"], ["Turquia", "TUR", "🇹🇷"]], "E": [["Alemanha", "GER", "🇩🇪"], ["Curaçau", "CUW", "🇨🇼"], ["Costa do Marfim", "CIV", "🇨🇮"], ["Equador", "ECU", "🇪🇨"]], "F": [["Holanda", "NED", "🇳🇱"], ["Japão", "JPN", "🇯🇵"], ["Suécia", "SWE", "🇸🇪"], ["Tunísia", "TUN", "🇹🇳"]], "G": [["Bélgica", "BEL", "🇧🇪"], ["Egito", "EGY", "🇪🇬"], ["Irã", "IRN", "🇮🇷"], ["Nova Zelândia", "NZL", "🇳🇿"]], "H": [["Espanha", "ESP", "🇪🇸"], ["Cabo Verde", "CPV", "🇨🇻"], ["Arábia Saudita", "KSA", "🇸🇦"], ["Uruguai", "URU", "🇺🇾"]], "I": [["França", "FRA", "🇫🇷"], ["Senegal", "SEN", "🇸🇳"], ["Iraque", "IRQ", "🇮🇶"], ["Noruega", "NOR", "🇳🇴"]], "J": [["Argentina", "ARG", "🇦🇷"], ["Argélia", "ALG", "🇩🇿"], ["Áustria", "AUT", "🇦🇹"], ["Jordânia", "JOR", "🇯🇴"]], "K": [["Portugal", "POR", "🇵🇹"], ["RD do Congo", "COD", "🇨🇩"], ["Uzbequistão", "UZB", "🇺🇿"], ["Colômbia", "COL", "🇨🇴"]], "L": [["Inglaterra", "ENG", "🏴"], ["Croácia", "CRO", "🇭🇷"], ["Gana", "GHA", "🇬🇭"], ["Panamá", "PAN", "🇵🇦"]]};
+const TOTAL_PER_TEAM=20,MAX_QTY=5;
+const EXTRA_SECTIONS=[
+ {key:'FWC',name:'Figurinhas FWC',group:'Especiais',flag:'🌎',code:'FWC',numbers:['00',...Array.from({length:19},(_,i)=>String(i+1))]},
+ {key:'CC',name:'Coca-Cola',group:'Especiais',flag:'🥤',code:'CC',numbers:Array.from({length:8},(_,i)=>String(i+1))}
+];
+const OLD_STATE=JSON.parse(localStorage.getItem('albumBingo2026StatusV2')||'{}');
+const SAVED=JSON.parse(localStorage.getItem('albumBingo2026StatusV4')||'null');
+const state=SAVED||migrateState(OLD_STATE);
 const daily=JSON.parse(localStorage.getItem('albumBingo2026Daily')||'{}');
-let activeGroup='A',query='',statusFilter='all',currentView='groups',viewStack=['groups'];
+let activeGroup='A',query='',statusFilter='all',currentView='groups',viewStack=['groups'],deferredInstallPrompt=null;
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-
 if(localStorage.getItem('albumTheme')==='dark')document.body.classList.add('dark');
-
+function migrateState(old){const out={};Object.entries(old||{}).forEach(([id,val])=>{if(typeof val==='number')out[id]=val;else if(val==='have')out[id]=1;else if(val==='repeat')out[id]=2});return out}
 function todayKey(){return new Date().toLocaleDateString('pt-BR')}
-function allStickers(){
-  const arr=[];
-  Object.entries(GROUPS).forEach(([g,teams])=>{
-    teams.forEach(([team,code])=>{
-      for(let n=1;n<=TOTAL_PER_TEAM;n++){
-        arr.push({id:`${code}-${n}`,group:g,groupName:`Grupo ${g}`,team,code,number:n});
-      }
-    });
-  });
-  return arr;
-}
+function allStickers(){const arr=[];Object.entries(GROUPS).forEach(([g,teams])=>teams.forEach(([team,code,flag])=>{for(let n=1;n<=TOTAL_PER_TEAM;n++)arr.push({id:`${code}-${n}`,group:g,groupName:`Grupo ${g}`,team,code,flag,number:String(n),sort:n,type:'team'})}));EXTRA_SECTIONS.forEach(sec=>sec.numbers.forEach((n,i)=>arr.push({id:`${sec.code}-${n}`,group:'SPECIAL',groupName:'Especiais',team:sec.name,code:sec.code,flag:sec.flag,number:n,sort:i,type:'special'})));return arr}
 const stickers=allStickers();
-
-function getStatus(id){return state[id]||'missing'}
-function setStatus(id,status){
-  const old=getStatus(id);
-  if(status==='missing')delete state[id];else state[id]=status;
-  if(old==='missing'&&(status==='have'||status==='repeat'))daily[todayKey()]=(daily[todayKey()]||0)+1;
-  localStorage.setItem('albumBingo2026StatusV2',JSON.stringify(state));
-  localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
-  render();
-}
-function cycle(id){
-  const s=getStatus(id);
-  if(s==='missing')setStatus(id,'have');
-  else if(s==='have')setStatus(id,'repeat');
-  else setStatus(id,'missing');
-}
-function counts(list=stickers){
-  const have=list.filter(x=>getStatus(x.id)==='have').length;
-  const repeat=list.filter(x=>getStatus(x.id)==='repeat').length;
-  const owned=have+repeat;
-  const missing=list.length-owned;
-  return{have,repeat,owned,missing,total:list.length};
-}
+function qty(id){return Number(state[id]||0)}
+function getStatus(id){const q=qty(id);return q===0?'missing':q===1?'have':'repeat'}
+function setQty(id,q){const old=qty(id);if(q<=0)delete state[id];else state[id]=q;if(old===0&&q>0)daily[todayKey()]=(daily[todayKey()]||0)+1;localStorage.setItem('albumBingo2026StatusV4',JSON.stringify(state));localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));render()}
+function cycle(id){const q=qty(id);setQty(id,q>=MAX_QTY?0:q+1)}
+function counts(list=stickers){const owned=list.filter(x=>qty(x.id)>0).length;const repeatQty=list.reduce((s,x)=>s+Math.max(0,qty(x.id)-1),0);const missing=list.length-owned;return{owned,repeatQty,missing,total:list.length}}
 function groupItems(g){return stickers.filter(x=>x.group===g)}
 function teamItems(code){return stickers.filter(x=>x.code===code)}
-function visibleSticker(x){
-  const q=norm(query.trim()),st=getStatus(x.id);
-  const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');
-  const queryOk=!q||norm(x.team).includes(q)||norm(x.code).includes(q)||norm(x.groupName).includes(q);
-  return statusOk&&queryOk;
-}
-function goView(v,push=true){
-  if(push&&currentView!==v)viewStack.push(v);
-  currentView=v;
-  $$('.app-view').forEach(el=>el.classList.remove('active'));
-  $('#view-'+v).classList.add('active');
-  $$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
-  render();
-  scrollTo({top:0,behavior:'smooth'});
-}
-function goBack(){
-  if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}
-  else goView('groups',false);
-}
-function renderDashboard(){
-  const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;
-  $('#percent').textContent=p+'%';
-  $('#barFill').style.width=p+'%';
-  $('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;
-  $('#haveCount').textContent=c.owned;
-  $('#missingCount').textContent=c.missing;
-  $('#repeatCount').textContent=c.repeat;
-  $('#totalCount').textContent=c.total;
-}
-function renderGroups(){
-  $('#groupSelector').innerHTML=Object.entries(GROUPS).map(([g])=>{
-    const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;
-    return`<button class="group-btn ${activeGroup===g?'active':''}" onclick="selectGroup('${g}')"><b>Grupo ${g}</b><br><small>✅ ${c.owned}/${c.total} · ${p}%</small></button>`;
-  }).join('');
-}
-function selectGroup(g){
-  activeGroup=g;
-  goView('groups',false);
-  document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'});
-}
-function renderBoards(){
-  const teams=GROUPS[activeGroup];
-  $('#bingoGrid').innerHTML=teams.map(([team,code])=>{
-    const items=teamItems(code),c=counts(items);
-    const nums=items.map(x=>{
-      const st=getStatus(x.id);
-      const hide=visibleSticker(x)?'':'hidden';
-      return`<button class="num-btn ${st} ${hide}" onclick="cycle('${x.id}')" title="${code} ${x.number}">${x.number}</button>`;
-    }).join('');
-    const any=items.some(visibleSticker);
-    return`<article class="team-board ${any?'':'hidden'}"><div class="team-head"><div><h3>${team}</h3><small>${code} · Grupo ${activeGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeat} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`;
-  }).join('');
-  const c=counts(groupItems(activeGroup));
-  $('#activeInfo').innerHTML=`📌 Grupo <b>${activeGroup}</b> · ✅ Tenho/Repetidas: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeat}</b> · ❌ Me falta: <b>${c.missing}</b>`;
-}
-function groupedList(status){
-  return Object.entries(GROUPS).map(([g,teams])=>{
-    const blocks=teams.map(([team,code])=>{
-      const arr=teamItems(code).filter(x=>getStatus(x.id)===status);
-      if(!arr.length)return'';
-      return`<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}</span>`).join('')}</div></div>`;
-    }).join('');
-    return blocks?`<div class="list-group"><h3>Grupo ${g}</h3>${blocks}</div>`:'';
-  }).join('')||'<div class="notice">Nada por aqui.</div>';
-}
-function renderLists(){
-  $('#missingPanel').innerHTML=groupedList('missing');
-  $('#repeatPanel').innerHTML=groupedList('repeat');
-}
-function renderStats(){
-  const teams=stickers.reduce((acc,x)=>{
-    acc[x.code]=acc[x.code]||{team:x.team,code:x.code,group:x.group,total:0,owned:0,repeat:0};
-    acc[x.code].total++;
-    if(getStatus(x.id)==='have'||getStatus(x.id)==='repeat')acc[x.code].owned++;
-    if(getStatus(x.id)==='repeat')acc[x.code].repeat++;
-    return acc;
-  },{});
-  const arr=Object.values(teams).map(t=>({...t,pct:Math.round(t.owned/t.total*100)}));
-  const most=[...arr].sort((a,b)=>b.pct-a.pct).slice(0,5);
-  const least=[...arr].sort((a,b)=>a.pct-b.pct).slice(0,5);
-  const maxDay=Math.max(1,...Object.values(daily));
-  const days=Object.entries(daily).slice(-14).reverse();
-  $('#statsPanel').innerHTML=`<div class="stats-card"><h3>Mais completas</h3>${most.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Menos completas</h3>${least.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`;
-}
-function renderTrades(){}
-
-function listTextByStatus(status){
-  return stickers
-    .filter(x=>getStatus(x.id)===status)
-    .map(x=>`${x.code} ${x.number} - ${x.team}`)
-    .join('\n');
-}
-function missingText(){
-  return listTextByStatus('missing') || 'Nenhuma faltando.';
-}
-function repeatText(){
-  return listTextByStatus('repeat') || 'Nenhuma repetida.';
-}
-function shareText(){
-  return`🏆 Álbum Copa 2026\n\n🔁 Repetidas:\n${repeatText()}\n\n❌ Me falta:\n${missingText()}`;
-}
-function missingShareText(){
-  return`🏆 Álbum Copa 2026\n\n❌ ME FALTAM\n\n${missingText()}`;
-}
-function repeatShareText(){
-  return`🏆 Álbum Copa 2026\n\n🔁 REPETIDAS\n\n${repeatText()}`;
-}
-async function copyList(){
-  try{await navigator.clipboard.writeText(shareText());alert('Lista copiada!')}
-  catch(e){alert('Não consegui copiar.')}
-}
-function shareWhats(){window.open('https://wa.me/?text='+encodeURIComponent(shareText()),'_blank')}
-async function copyMissing(){
-  try{await navigator.clipboard.writeText(missingShareText());alert('Lista de faltantes copiada!')}
-  catch(e){alert('Não consegui copiar.')}
-}
-function shareMissing(){window.open('https://wa.me/?text='+encodeURIComponent(missingShareText()),'_blank')}
-async function copyRepeats(){
-  try{await navigator.clipboard.writeText(repeatShareText());alert('Lista de repetidas copiada!')}
-  catch(e){alert('Não consegui copiar.')}
-}
-function shareRepeats(){window.open('https://wa.me/?text='+encodeURIComponent(repeatShareText()),'_blank')}
-
+function visibleSticker(x){const q=norm(query.trim()),st=getStatus(x.id);const statusOk=statusFilter==='all'||st===statusFilter||(statusFilter==='have'&&st==='repeat');const queryOk=!q||norm(x.team).includes(q)||norm(x.code).includes(q)||norm(x.groupName).includes(q)||norm(`${x.code} ${x.number}`).includes(q);return statusOk&&queryOk}
+function goView(v,push=true){if(push&&currentView!==v)viewStack.push(v);currentView=v;$$('.app-view').forEach(el=>el.classList.remove('active'));$('#view-'+v).classList.add('active');$$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render();scrollTo({top:0,behavior:'smooth'})}
+function goBack(){if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}else goView('groups',false)}
+function renderDashboard(){const c=counts(),p=c.total?Math.round(c.owned/c.total*100):0;$('#percent').textContent=p+'%';$('#barFill').style.width=p+'%';$('#progressText').textContent=`${c.owned} de ${c.total} marcadas como tenho/repetidas`;$('#haveCount').textContent=c.owned;$('#missingCount').textContent=c.missing;$('#repeatCount').textContent=c.repeatQty;$('#totalCount').textContent=c.total}
+function groupSummaryHTML(g,teams){if(g==='SPECIAL')return `<div class="group-flags"><span class="flag-code">🌎 FWC</span><span class="flag-code">🥤 CC</span></div>`;return `<div class="group-flags">${teams.map(([team,code,flag])=>`<span class="flag-code">${flag} ${code}</span>`).join('')}</div>`}
+function renderGroups(){const normal=Object.entries(GROUPS).map(([g,teams])=>{const c=counts(groupItems(g)),p=c.total?Math.round(c.owned/c.total*100):0;return`<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">${groupSummaryHTML(g,teams)}<b>Grupo ${g}</b><br><small>✅ ${c.owned}/${c.total} · ${p}%</small></button>`}).join('');const sp=counts(groupItems('SPECIAL')),pp=sp.total?Math.round(sp.owned/sp.total*100):0;$('#groupSelector').innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">${groupSummaryHTML('SPECIAL',[])}<b>⭐ Especiais</b><br><small>✅ ${sp.owned}/${sp.total} · ${pp}%</small></button>`}
+function selectGroup(g){activeGroup=g;goView('groups',false);document.querySelector('.tools-card').scrollIntoView({behavior:'smooth',block:'start'})}
+function boardsForActive(){if(activeGroup==='SPECIAL')return EXTRA_SECTIONS.map(s=>[s.name,s.code,s.flag]);return GROUPS[activeGroup]}
+function renderBoards(){const teams=boardsForActive();$('#bingoGrid').innerHTML=teams.map(([team,code,flag])=>{const items=teamItems(code),c=counts(items),pct=c.total?Math.round(c.owned/c.total*100):0;const nums=items.sort((a,b)=>a.sort-b.sort).map(x=>{const st=getStatus(x.id),hide=visibleSticker(x)?'':'hidden',q=qty(x.id);return`<div class="num-wrap ${hide}"><button class="num-btn ${st}" onclick="cycle('${x.id}')" title="${x.code} ${x.number}">${x.number}</button><span class="repeat-badge">${q>1?'x'+q:''}</span></div>`}).join('');const any=items.some(visibleSticker);return`<article class="team-board ${any?'':'hidden'} ${pct===100?'complete':''}"><div class="team-head"><div><h3>${flag||''} ${team}</h3><small>${code} · ${activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup}</small></div><div class="team-stats">✅ ${c.owned}/${c.total}<br>🔁 ${c.repeatQty} · ❌ ${c.missing}</div></div><div class="num-grid">${nums}</div></article>`}).join('');const c=counts(groupItems(activeGroup));$('#activeInfo').innerHTML=`📌 <b>${activeGroup==='SPECIAL'?'Especiais':'Grupo '+activeGroup}</b> · ✅ Tenho: <b>${c.owned}</b> · 🔁 Repetidas: <b>${c.repeatQty}</b> · ❌ Me falta: <b>${c.missing}</b>`}
+function groupedList(status){const order=[...Object.keys(GROUPS),'SPECIAL'];return order.map(g=>{const teams=(g==='SPECIAL'?EXTRA_SECTIONS.map(s=>[s.name,s.code,s.flag]):GROUPS[g]);const blocks=teams.map(([team,code,flag])=>{const arr=teamItems(code).filter(x=>getStatus(x.id)===status);if(!arr.length)return'';return`<div class="list-team"><b>${flag||''} ${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`}).join('');return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:''}).join('')||'<div class="notice">Nada por aqui.</div>'}
+function renderLists(){$('#missingPanel').innerHTML=groupedList('missing');$('#repeatPanel').innerHTML=groupedList('repeat')}
+function renderStats(){const teams=stickers.reduce((acc,x)=>{acc[x.code]=acc[x.code]||{team:x.team,code:x.code,group:x.group,total:0,owned:0,repeatQty:0};acc[x.code].total++;if(qty(x.id)>0)acc[x.code].owned++;acc[x.code].repeatQty+=Math.max(0,qty(x.id)-1);return acc},{});const arr=Object.values(teams).map(t=>({...t,pct:Math.round(t.owned/t.total*100)}));const most=[...arr].sort((a,b)=>b.pct-a.pct||b.owned-a.owned).slice(0,10);const least=[...arr].sort((a,b)=>a.pct-b.pct||a.owned-b.owned).slice(0,10);const maxDay=Math.max(1,...Object.values(daily));const days=Object.entries(daily).slice(-14).reverse();$('#statsPanel').innerHTML=`<div class="stats-card"><h3>10 mais completas</h3>${most.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>10 menos completas</h3>${least.map(t=>`<div class="rank-row"><span>${t.team} (${t.code})</span><b>${t.owned}/${t.total} · ${t.pct}%</b></div>`).join('')}</div><div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`}
+function listTextByStatus(status){return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''} - ${x.team}`).join('\\n')}
+function missingText(){return listTextByStatus('missing')||'Nenhuma faltando.'}
+function repeatText(){return listTextByStatus('repeat')||'Nenhuma repetida.'}
+function missingShareText(){return`🏆 Álbum Copa 2026\\n\\n❌ ME FALTAM\\n\\n${missingText()}`}
+function repeatShareText(){return`🏆 Álbum Copa 2026\\n\\n🔁 REPETIDAS\\n\\n${repeatText()}`}
+async function copyText(t,msg){try{await navigator.clipboard.writeText(t);alert(msg)}catch(e){alert('Não consegui copiar.')}}
+function shareWhatsText(t){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
+function exportBackup(){const data={version:4,createdAt:new Date().toISOString(),state,daily};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='album-copa2026-backup.json';a.click();URL.revokeObjectURL(a.href)}
+async function importBackup(e){const file=e.target.files&&e.target.files[0];if(!file)return;try{const txt=await file.text();const data=JSON.parse(txt);Object.keys(state).forEach(k=>delete state[k]);Object.assign(state,data.state||{});Object.keys(daily).forEach(k=>delete daily[k]);Object.assign(daily,data.daily||{});localStorage.setItem('albumBingo2026StatusV4',JSON.stringify(state));localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));alert('Backup importado!');render()}catch(err){alert('Backup inválido.')}finally{e.target.value=''}}
+function setupInstall(){window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});$('#installBtn').addEventListener('click',async()=>{if(deferredInstallPrompt){deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null}else alert('No Android: Chrome → 3 pontinhos → Instalar aplicativo ou Adicionar à tela inicial.')})}
 function render(){renderDashboard();renderGroups();renderBoards();renderLists();renderStats()}
-
 $('#searchInput').addEventListener('input',e=>{query=e.target.value;renderBoards()});
+$('#searchInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.target.value='';query='';renderBoards();e.target.focus()}});
 $('#statusFilter').addEventListener('change',e=>{statusFilter=e.target.value;renderBoards()});
-$('#clearGroupBtn').addEventListener('click',()=>{query='';statusFilter='all';$('#searchInput').value='';$('#statusFilter').value='all';renderBoards()});
-$('#themeBtn').addEventListener('click',()=>{
-  document.body.classList.toggle('dark');
-  localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');
-  $('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
-});
+$('#clearGroupBtn').addEventListener('click',()=>{query='';statusFilter='all';$('#searchInput').value='';$('#statusFilter').value='all';renderBoards();$('#searchInput').focus()});
+$('#themeBtn').addEventListener('click',()=>{document.body.classList.toggle('dark');localStorage.setItem('albumTheme',document.body.classList.contains('dark')?'dark':'light');$('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙'});
 $('#themeBtn').textContent=document.body.classList.contains('dark')?'☀️':'🌙';
-
-const copyBtn=$('#copyBtn'); if(copyBtn)copyBtn.addEventListener('click',copyList);
-const shareBtn=$('#shareBtn'); if(shareBtn)shareBtn.addEventListener('click',shareWhats);
-const copyMissingBtn=$('#copyMissingBtn'); if(copyMissingBtn)copyMissingBtn.addEventListener('click',copyMissing);
-const shareMissingBtn=$('#shareMissingBtn'); if(shareMissingBtn)shareMissingBtn.addEventListener('click',shareMissing);
-const copyRepeatsBtn=$('#copyRepeatsBtn'); if(copyRepeatsBtn)copyRepeatsBtn.addEventListener('click',copyRepeats);
-const shareRepeatsBtn=$('#shareRepeatsBtn'); if(shareRepeatsBtn)shareRepeatsBtn.addEventListener('click',shareRepeats);
-
+$('#copyMissingBtn').addEventListener('click',()=>copyText(missingShareText(),'Lista de faltantes copiada!'));
+$('#shareMissingBtn').addEventListener('click',()=>shareWhatsText(missingShareText()));
+$('#copyRepeatsBtn').addEventListener('click',()=>copyText(repeatShareText(),'Lista de repetidas copiada!'));
+$('#shareRepeatsBtn').addEventListener('click',()=>shareWhatsText(repeatShareText()));
+$('#exportBackupBtn').addEventListener('click',exportBackup);
+$('#importBackupInput').addEventListener('change',importBackup);
 $('#backBtn').addEventListener('click',goBack);
 $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
 $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
+setupInstall();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+localStorage.setItem('albumBingo2026StatusV4',JSON.stringify(state));
 render();
