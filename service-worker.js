@@ -1,4 +1,4 @@
-const CACHE = 'album-copa2026-google-final-v3';
+const CACHE = 'album-copa2026-visual-v1';
 
 const ASSETS = [
   './',
