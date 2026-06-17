@@ -1,6 +1,20 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signInAnonymously,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+
+import {
+  getFirestore
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAvyccKuqTDhtdNS4mMyqm3F3Gu7kfeKd4",
@@ -17,4 +31,143 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-signInAnonymously(auth);
+const providerGoogle = new GoogleAuthProvider();
+
+const $ = (s) => document.querySelector(s);
+
+function setAuthStatus(text){
+  const el = $("#authStatus");
+  if(el) el.textContent = text;
+}
+
+function setLoggedUser(user){
+  const box = $("#loggedUserBox");
+  const text = $("#loggedUserText");
+
+  if(!box || !text) return;
+
+  if(user){
+    box.style.display = "flex";
+    const name =
+      user.displayName ||
+      user.email ||
+      (user.isAnonymous ? "Usuário anônimo" : "Colecionador");
+
+    text.textContent = "Conectado: " + name;
+    setAuthStatus("Conta conectada. Trocas e chat liberados.");
+  }else{
+    box.style.display = "none";
+    text.textContent = "";
+    setAuthStatus("Entre para usar trocas, chat e perfil online.");
+  }
+}
+
+async function loginGoogle(){
+  try{
+    setAuthStatus("Abrindo login Google...");
+
+    try{
+      await signInWithPopup(auth, providerGoogle);
+    }catch(popupError){
+      await signInWithRedirect(auth, providerGoogle);
+    }
+  }catch(error){
+    console.error(error);
+    alert("Não foi possível entrar com Google. Verifique se o provedor Google está ativado no Firebase.");
+    setAuthStatus("Erro ao entrar com Google.");
+  }
+}
+
+async function loginAnonimo(){
+  try{
+    setAuthStatus("Entrando como anônimo...");
+    await signInAnonymously(auth);
+  }catch(error){
+    console.error(error);
+    alert("Erro no login anônimo. Ative Anonymous no Firebase Authentication.");
+    setAuthStatus("Erro no login anônimo.");
+  }
+}
+
+async function loginEmail(){
+  const email = ($("#emailLoginInput")?.value || "").trim();
+  const senha = $("#passwordLoginInput")?.value || "";
+
+  if(!email || !senha){
+    alert("Informe e-mail e senha.");
+    return;
+  }
+
+  try{
+    setAuthStatus("Entrando com e-mail...");
+    await signInWithEmailAndPassword(auth, email, senha);
+  }catch(error){
+    console.error(error);
+    alert("Erro ao entrar. Confira e-mail/senha ou crie uma conta.");
+    setAuthStatus("Erro no login por e-mail.");
+  }
+}
+
+async function criarContaEmail(){
+  const email = ($("#emailLoginInput")?.value || "").trim();
+  const senha = $("#passwordLoginInput")?.value || "";
+
+  if(!email || !senha){
+    alert("Informe e-mail e senha para criar a conta.");
+    return;
+  }
+
+  if(senha.length < 6){
+    alert("A senha precisa ter pelo menos 6 caracteres.");
+    return;
+  }
+
+  try{
+    setAuthStatus("Criando conta...");
+    await createUserWithEmailAndPassword(auth, email, senha);
+  }catch(error){
+    console.error(error);
+    alert("Erro ao criar conta. Talvez esse e-mail já exista ou o login por e-mail não esteja ativado.");
+    setAuthStatus("Erro ao criar conta.");
+  }
+}
+
+async function sairConta(){
+  try{
+    await signOut(auth);
+    setLoggedUser(null);
+  }catch(error){
+    console.error(error);
+    alert("Erro ao sair da conta.");
+  }
+}
+
+function setupAuthButtons(){
+  $("#googleLoginBtn")?.addEventListener("click", loginGoogle);
+  $("#anonLoginBtn")?.addEventListener("click", loginAnonimo);
+  $("#emailLoginBtn")?.addEventListener("click", loginEmail);
+  $("#emailRegisterBtn")?.addEventListener("click", criarContaEmail);
+  $("#logoutBtn")?.addEventListener("click", sairConta);
+
+  $("#passwordLoginInput")?.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") loginEmail();
+  });
+}
+
+getRedirectResult(auth).catch((error)=>{
+  console.error(error);
+});
+
+onAuthStateChanged(auth, (user)=>{
+  setLoggedUser(user);
+  window.albumFirebaseUser = user || null;
+  window.dispatchEvent(new CustomEvent("album-auth-changed", { detail: { user } }));
+});
+
+// Se ninguém estiver logado, deixa o usuário escolher.
+// Não força login anônimo automático aqui, para não atrapalhar Google/e-mail.
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", setupAuthButtons);
+}else{
+  setupAuthButtons();
+}
