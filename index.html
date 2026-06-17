@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Álbum Copa 2026</title>
-<link rel="stylesheet" href="./style.css?v=google-final-3"/>
+<link rel="stylesheet" href="./style.css?v=visual-v1"/>
 <link rel="manifest" href="./manifest.json"/>
 <link rel="apple-touch-icon" href="./icons/icon-192.png"/>
 </head>
@@ -31,32 +31,43 @@
   <button id="themeBtn" class="icon-btn">🌙</button>
 </header>
 
-<section class="auth-card">
-  <div class="auth-head">
+<section class="auth-card auth-card-v2">
+  <div class="auth-title-row">
     <div>
-      <b>🔐 Conta do colecionador</b>
-      <p id="authStatus">Entre para usar trocas, chat e perfil online.</p>
+      <b>🔐 Minha conta</b>
+      <p id="authStatus">Entre para salvar seu álbum na nuvem e usar trocas.</p>
+    </div>
+    <div id="loggedUserBox" class="logged-user-box" style="display:none">
+      <span id="loggedUserText">Usuário conectado</span>
+      <button id="logoutBtn" type="button" class="danger-btn-small">Sair</button>
     </div>
   </div>
 
-  <div class="auth-actions">
-    <button id="googleLoginBtn" type="button">🔵 Entrar com Google</button>
-    <button id="anonLoginBtn" type="button" class="ghost">👤 Entrar anônimo</button>
-  </div>
+  <div class="auth-grid-v2">
+    <div class="login-panel">
+      <h3>✅ Já tenho conta</h3>
+      <input id="emailLoginInput" type="email" placeholder="Seu e-mail"/>
+      <input id="passwordLoginInput" type="password" placeholder="Sua senha"/>
+      <button id="emailLoginBtn" type="button" class="main-login-btn">📧 Entrar com e-mail</button>
+    </div>
 
-  <div class="email-login-box">
-    <input id="emailLoginInput" type="email" placeholder="E-mail"/>
-    <input id="passwordLoginInput" type="password" placeholder="Senha"/>
-    <div class="auth-actions">
-      <button id="emailLoginBtn" type="button">📧 Entrar com e-mail</button>
-      <button id="emailRegisterBtn" type="button" class="ghost">➕ Criar conta</button>
+    <div class="login-panel create-panel">
+      <h3>🆕 Criar acesso</h3>
+      <p>Use o mesmo e-mail e senha para criar sua conta. Depois seu álbum ficará salvo na nuvem.</p>
+      <button id="emailRegisterBtn" type="button" class="create-account-btn">➕ Criar conta com e-mail</button>
     </div>
   </div>
 
-  <div id="loggedUserBox" class="logged-user-box" style="display:none">
-    <span id="loggedUserText">Usuário conectado</span>
-    <button id="logoutBtn" type="button" class="danger-btn-small">Sair</button>
+  <div class="login-divider"><span>ou</span></div>
+
+  <div class="quick-login-row">
+    <button id="googleLoginBtn" type="button" class="google-btn">🔵 Entrar com Google</button>
+    <button id="anonLoginBtn" type="button" class="anon-btn">👤 Continuar sem conta</button>
   </div>
+
+  <small class="auth-help-text">
+    Dica: para recuperar o álbum em outro aparelho, prefira entrar com e-mail e senha.
+  </small>
 </section>
 
 <a class="ad-banner" href="https://wa.me/5592992800688" target="_blank" rel="noopener">
@@ -101,6 +112,7 @@
   <span>Segure o número para zerar</span>
 </section>
 
+<button id="floatingBackBtn" class="floating-back" type="button">⬅️ Voltar</button>
 <section id="view-groups" class="app-view active">
   <section class="tools-card">
     <input id="searchInput" placeholder="Buscar global: BRA 11, Brasil, FWC 00, CC 2..."/>
@@ -232,18 +244,17 @@
 
 </main>
 
-<nav class="bottom-nav">
+<nav class="bottom-nav bottom-nav-v2">
   <button data-view="groups" class="active">🏠<span>Início</span></button>
-  <button id="backBtn">⬅️<span>Voltar</span></button>
-  <button data-view="groups">🔢<span>Grupos</span></button>
+  <button data-view="groups">🔢<span>Álbum</span></button>
   <button data-view="missing">❌<span>Faltam</span></button>
   <button data-view="repeats">🔁<span>Repetidas</span></button>
-  <button data-view="stats">📊<span>Status</span></button>
   <button data-view="trades">🌍<span>Trocas</span></button>
+  <button data-view="stats">📊<span>Status</span></button>
 </nav>
 
-<script src="./app.js?v=google-final-3"></script>
-<script type="module" src="./firebase.js?v=google-final-3"></script>
-<script type="module" src="./firebase-trades.js?v=google-final-3"></script>
+<script src="./app.js?v=visual-v1"></script>
+<script type="module" src="./firebase.js?v=visual-v1"></script>
+<script type="module" src="./firebase-trades.js?v=visual-v1"></script>
 </body>
 </html>
