@@ -19,6 +19,13 @@ let deferredInstallPrompt=null;
 let holdTimer=null;
 let holdFired=false;
 
+// FIREBASE CLOUD SYNC
+let cloudUser=null;
+let cloudLoading=false;
+let cloudSaveTimer=null;
+let cloudLastLoadedUid=null;
+
+
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -38,7 +45,120 @@ function migrateState(old){
 function persist(){
   localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
   localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
+  scheduleCloudSave();
 }
+
+
+async function getCloudApi(){
+  const firebase = await import('./firebase.js');
+  const firestore = await import('https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js');
+  return {
+    db: firebase.db,
+    doc: firestore.doc,
+    getDoc: firestore.getDoc,
+    setDoc: firestore.setDoc,
+    serverTimestamp: firestore.serverTimestamp
+  };
+}
+
+function currentAlbumPayload(){
+  return {
+    app:'album-copa2026',
+    version:7,
+    state:JSON.parse(JSON.stringify(state || {})),
+    daily:JSON.parse(JSON.stringify(daily || {})),
+    theme:localStorage.getItem('albumTheme') || 'light',
+    updatedAt:null
+  };
+}
+
+function scheduleCloudSave(){
+  if(!cloudUser || cloudLoading) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=setTimeout(saveCloudAlbum,900);
+}
+
+async function saveCloudAlbum(){
+  if(!cloudUser || cloudLoading) return;
+
+  try{
+    const {db,doc,setDoc,serverTimestamp}=await getCloudApi();
+    const payload=currentAlbumPayload();
+    payload.updatedAt=serverTimestamp();
+
+    await setDoc(doc(db,'albums',cloudUser.uid),payload,{merge:true});
+
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada. Álbum salvo na nuvem.';
+  }catch(e){
+    console.error('Erro ao salvar álbum na nuvem:',e);
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada, mas não consegui salvar na nuvem.';
+  }
+}
+
+async function loadCloudAlbum(user){
+  if(!user) return;
+  if(cloudLastLoadedUid===user.uid) return;
+
+  cloudUser=user;
+  cloudLastLoadedUid=user.uid;
+  cloudLoading=true;
+
+  try{
+    const {db,doc,getDoc}=await getCloudApi();
+    const ref=doc(db,'albums',user.uid);
+    const snap=await getDoc(ref);
+
+    if(snap.exists()){
+      const data=snap.data() || {};
+
+      if(data.state && typeof data.state==='object'){
+        Object.keys(state).forEach(k=>delete state[k]);
+        Object.assign(state,data.state);
+        localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
+      }
+
+      if(data.daily && typeof data.daily==='object'){
+        Object.keys(daily).forEach(k=>delete daily[k]);
+        Object.assign(daily,data.daily);
+        localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
+      }
+
+      if(data.theme){
+        localStorage.setItem('albumTheme',data.theme);
+        document.body.classList.toggle('dark',data.theme==='dark');
+        const themeBtn=document.getElementById('themeBtn');
+        if(themeBtn) themeBtn.textContent=data.theme==='dark'?'☀️':'🌙';
+      }
+
+      render();
+
+      const status=document.getElementById('authStatus');
+      if(status) status.textContent='Álbum carregado da nuvem.';
+    }else{
+      await saveCloudAlbum();
+    }
+  }catch(e){
+    console.error('Erro ao carregar álbum da nuvem:',e);
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada, mas não consegui carregar a nuvem.';
+  }finally{
+    cloudLoading=false;
+  }
+}
+
+window.addEventListener('album-auth-changed',(event)=>{
+  const user=event.detail && event.detail.user ? event.detail.user : null;
+
+  if(user){
+    loadCloudAlbum(user);
+  }else{
+    cloudUser=null;
+    cloudLastLoadedUid=null;
+  }
+});
+
 
 function todayKey(){return new Date().toLocaleDateString('pt-BR')}
 
@@ -70,6 +190,7 @@ function setQty(id,q){
   if(old===0&&q>0)daily[todayKey()]=(daily[todayKey()]||0)+1;
   persist();
   render();
+  if(window.albumFirebaseUser) loadCloudAlbum(window.albumFirebaseUser);
 }
 
 function tapSticker(id){
@@ -433,7 +554,7 @@ function render(){
 function buildHistoryBackup(){
   return {
     app: 'album-copa2026',
-    version: 6,
+    version: 7,
     createdAt: new Date().toISOString(),
     state: state || {},
     daily: daily || {},
@@ -499,6 +620,7 @@ async function loadHistoryFile(event){
 
     persist();
     render();
+    saveCloudAlbum();
     alert('Histórico carregado com sucesso!');
   }catch(e){
     alert('Erro ao carregar histórico. Verifique se o arquivo é o backup correto.');
