@@ -661,6 +661,7 @@ function init(){
   if($('#exportBackupBtn'))$('#exportBackupBtn').addEventListener('click',exportBackup);
   if($('#importBackupInput'))$('#importBackupInput').addEventListener('change',importBackup);
   if($('#backBtn'))$('#backBtn').addEventListener('click',goBack);
+  if($('#floatingBackBtn'))$('#floatingBackBtn').addEventListener('click',goBack);
 
   $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{
     goView(btn.dataset.view);
