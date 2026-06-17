@@ -325,8 +325,18 @@ function renderDashboard(){
 }
 
 function groupSummaryHTML(g,teams){
-  if(g==='SPECIAL')return `<div class="group-codes"><span class="sig-code">FWC</span><span class="sig-code">CC</span></div>`;
-  return `<div class="group-codes">${teams.map(([team,code])=>`<span class="sig-code">${code}</span>`).join('')}</div>`;
+  if(g==='SPECIAL'){
+    return `<div class="group-letter-box">★</div>
+      <div class="group-teams">
+        <span>FWC</span>
+        <span>CC</span>
+      </div>`;
+  }
+
+  return `<div class="group-letter-box">${g}</div>
+    <div class="group-teams">
+      ${teams.map(([team,code])=>`<span>${code}</span>`).join('')}
+    </div>`;
 }
 
 function renderGroups(){
@@ -336,18 +346,24 @@ function renderGroups(){
   const normal=Object.entries(GROUPS).map(([g,teams])=>{
     const c=counts(groupItems(g));
     const p=c.total?Math.round(c.owned/c.total*100):0;
-    return `<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">
+    return `<button class="group-btn group-btn-with-teams ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">
       ${groupSummaryHTML(g,teams)}
-      <div class="group-info"><b>Grupo ${g}</b><small>✅ ${c.owned}/${c.total}<br>${p}%</small></div>
+      <div class="group-info">
+        <b>Grupo ${g}</b>
+        <small>✅ ${c.owned}/${c.total} · ${p}%</small>
+      </div>
     </button>`;
   }).join('');
 
   const sp=counts(groupItems('SPECIAL'));
   const pp=sp.total?Math.round(sp.owned/sp.total*100):0;
 
-  selector.innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">
+  selector.innerHTML=normal+`<button class="group-btn group-btn-with-teams ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">
     ${groupSummaryHTML('SPECIAL',[])}
-    <div class="group-info"><b>⭐ Especiais</b><small>✅ ${sp.owned}/${sp.total}<br>${pp}%</small></div>
+    <div class="group-info">
+      <b>⭐ Especiais</b>
+      <small>✅ ${sp.owned}/${sp.total} · ${pp}%</small>
+    </div>
   </button>`;
 }
 
