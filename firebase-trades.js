@@ -19,7 +19,6 @@ let currentUser = null;
 let myPosition = null;
 let selectedChatUser = null;
 let unsubscribeChat = null;
-let nearbyCache = [];
 
 const $ = (s) => document.querySelector(s);
 
@@ -119,101 +118,31 @@ function kmDistance(a,b){
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 
-function codeLabel(id){
-  return String(id || "").replace("-", " ");
-}
-
-function myRepeatedList(){
-  const mine = getAlbumState();
-  return Object.entries(mine)
-    .filter(([id,q]) => Number(q) > 1)
-    .map(([id,q]) => ({
-      id,
-      code: codeLabel(id),
-      repeatQty: Number(q) - 1
-    }));
-}
-
-function myMissingSet(){
-  const mine = getAlbumState();
-  return new Set(
-    window.stickers
-      ? window.stickers.filter(x => Number(mine[x.id] || 0) === 0).map(x => x.id)
-      : []
-  );
-}
-
-function buildAllPossibleIdsFromState(stateA, stateB){
-  const ids = new Set();
-  Object.keys(stateA || {}).forEach(id => ids.add(id));
-  Object.keys(stateB || {}).forEach(id => ids.add(id));
-
-  if(window.stickers){
-    window.stickers.forEach(x => ids.add(x.id));
-  }
-
-  return Array.from(ids);
-}
-
-function tradeCrossing(otherUser){
+function compatibility(otherUser){
   const mine = getAlbumState();
   const other = otherUser.albumState || {};
 
-  const ids = buildAllPossibleIdsFromState(mine, other);
+  let theyHaveINeed = 0;
+  let iHaveTheyNeed = 0;
 
-  const theyCanGiveMe = [];
-  const iCanGiveThem = [];
-  const perfectPairs = [];
-
-  ids.forEach(id=>{
-    const myQty = Number(mine[id] || 0);
-    const otherQty = Number(other[id] || 0);
-
-    // Ela/ele tem repetida e eu não tenho.
-    if(otherQty > 1 && myQty === 0){
-      theyCanGiveMe.push({
-        id,
-        code: codeLabel(id),
-        repeatQty: otherQty - 1
-      });
-    }
-
-    // Eu tenho repetida e ela/ele não tem.
-    if(myQty > 1 && otherQty === 0){
-      iCanGiveThem.push({
-        id,
-        code: codeLabel(id),
-        repeatQty: myQty - 1
-      });
+  Object.entries(other).forEach(([id, q])=>{
+    if(Number(q) > 1 && Number(mine[id] || 0) === 0){
+      theyHaveINeed++;
     }
   });
 
-  const pairCount = Math.min(theyCanGiveMe.length, iCanGiveThem.length);
+  Object.entries(mine).forEach(([id, q])=>{
+    if(Number(q) > 1 && Number(other[id] || 0) === 0){
+      iHaveTheyNeed++;
+    }
+  });
 
-  for(let i=0;i<pairCount;i++){
-    perfectPairs.push({
-      receive: theyCanGiveMe[i],
-      give: iCanGiveThem[i]
-    });
-  }
-
-  const score = Math.min(100, Math.round(((theyCanGiveMe.length + iCanGiveThem.length) / 20) * 100));
+  const score = Math.min(100, Math.round(((theyHaveINeed + iHaveTheyNeed) / 20) * 100));
 
   return {
-    theyCanGiveMe,
-    iCanGiveThem,
-    perfectPairs,
+    theyHaveINeed,
+    iHaveTheyNeed,
     score
-  };
-}
-
-function compatibility(otherUser){
-  const cross = tradeCrossing(otherUser);
-
-  return {
-    theyHaveINeed: cross.theyCanGiveMe.length,
-    iHaveTheyNeed: cross.iCanGiveThem.length,
-    score: cross.score
   };
 }
 
@@ -309,43 +238,25 @@ async function findNearbyPeople(){
     if(typeof u.lat !== "number" || typeof u.lng !== "number") return;
 
     const distance = kmDistance(myPosition, {lat:u.lat, lng:u.lng});
-    const cross = tradeCrossing(u);
 
     if(distance <= radius){
       list.push({
         ...u,
         distance,
-        comp: {
-          theyHaveINeed: cross.theyCanGiveMe.length,
-          iHaveTheyNeed: cross.iCanGiveThem.length,
-          score: cross.score
-        },
-        cross
+        comp: compatibility(u)
       });
     }
   });
 
-  list.sort((a,b)=>b.comp.score - a.comp.score || a.distance - b.distance);
-
-  nearbyCache = list;
+  list.sort((a,b)=>a.distance - b.distance || b.comp.score - a.comp.score);
 
   renderNearbyPeople(list);
 
   setTradeStatus(
     list.length
-      ? `Encontradas ${list.length} pessoa(s). Clique em Ver troca para cruzar as figurinhas.`
+      ? `Encontradas ${list.length} pessoa(s) próximas.`
       : "Nenhuma pessoa próxima encontrada neste raio."
   );
-
-  updateTradeCounters(list);
-}
-
-function updateTradeCounters(list){
-  const online = document.getElementById("onlineTradeCount");
-  const nearby = document.getElementById("nearbyTradeCount");
-
-  if(online) online.textContent = String(list.length);
-  if(nearby) nearby.textContent = String(list.filter(x=>x.distance <= 10).length);
 }
 
 function renderNearbyPeople(list){
@@ -376,12 +287,11 @@ function renderNearbyPeople(list){
           <span>✅ Tem: ${u.owned || 0}</span>
           <span>🔁 Rep.: ${u.repeatQty || 0}</span>
           <span>❌ Falta: ${u.missing || 0}</span>
-          <span>📥 Tem p/ você: ${u.comp.theyHaveINeed}</span>
-          <span>📤 Você tem p/ ela: ${u.comp.iHaveTheyNeed}</span>
+          <span>🤝 Tem p/ você: ${u.comp.theyHaveINeed}</span>
+          <span>🎁 Você tem p/ ela: ${u.comp.iHaveTheyNeed}</span>
         </div>
 
-        <div class="person-actions three-actions">
-          <button type="button" data-cross="${u.uid}">🤝 Ver troca</button>
+        <div class="person-actions">
           <button type="button" data-chat="${u.uid}" data-nick="${escapeAttr(u.nick || "Colecionador")}">💬 Chat</button>
           ${
             phone
@@ -389,8 +299,6 @@ function renderNearbyPeople(list){
               : `<button type="button" disabled>Sem WhatsApp</button>`
           }
         </div>
-
-        <div id="cross-${u.uid}" class="cross-panel" style="display:none"></div>
       </article>
     `;
   }).join("");
@@ -400,94 +308,6 @@ function renderNearbyPeople(list){
       openChat(btn.dataset.chat, btn.dataset.nick);
     });
   });
-
-  box.querySelectorAll("[data-cross]").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      openCrossing(btn.dataset.cross);
-    });
-  });
-}
-
-function openCrossing(uid){
-  const user = nearbyCache.find(x => x.uid === uid);
-  if(!user) return;
-
-  const panel = document.getElementById("cross-" + uid);
-  if(!panel) return;
-
-  const show = panel.style.display === "none";
-  panel.style.display = show ? "block" : "none";
-
-  if(!show) return;
-
-  const cross = tradeCrossing(user);
-
-  panel.innerHTML = renderCrossingPanel(user, cross);
-}
-
-function renderCrossingPanel(user, cross){
-  const receive = cross.theyCanGiveMe.slice(0, 30);
-  const give = cross.iCanGiveThem.slice(0, 30);
-  const pairs = cross.perfectPairs.slice(0, 10);
-
-  return `
-    <div class="cross-box">
-      <h4>🤝 Cruzamento com ${escapeHtml(user.nick || "Colecionador")}</h4>
-
-      <div class="cross-summary">
-        <div>
-          <b>${cross.theyCanGiveMe.length}</b>
-          <small>figurinhas que ela/ele tem e você precisa</small>
-        </div>
-        <div>
-          <b>${cross.iCanGiveThem.length}</b>
-          <small>figurinhas que você tem e ela/ele precisa</small>
-        </div>
-        <div>
-          <b>${cross.perfectPairs.length}</b>
-          <small>trocas possíveis agora</small>
-        </div>
-      </div>
-
-      ${
-        pairs.length
-          ? `<div class="perfect-trades">
-              <h5>🔥 Trocas sugeridas</h5>
-              ${pairs.map(p=>`
-                <div class="pair-row">
-                  <span>Você entrega <b>${p.give.code}</b></span>
-                  <span>Você recebe <b>${p.receive.code}</b></span>
-                </div>
-              `).join("")}
-            </div>`
-          : `<div class="notice">Ainda não há troca perfeita, mas veja as listas abaixo.</div>`
-      }
-
-      <div class="cross-lists">
-        <div>
-          <h5>📥 Ela/ele tem para você</h5>
-          <div class="chips">
-            ${
-              receive.length
-                ? receive.map(x=>`<span class="code-chip">${x.code} x${x.repeatQty}</span>`).join("")
-                : '<span class="muted-text">Nada encontrado.</span>'
-            }
-          </div>
-        </div>
-
-        <div>
-          <h5>📤 Você tem para ela/ele</h5>
-          <div class="chips">
-            ${
-              give.length
-                ? give.map(x=>`<span class="code-chip">${x.code} x${x.repeatQty}</span>`).join("")
-                : '<span class="muted-text">Nada encontrado.</span>'
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
 }
 
 function chatId(a,b){
