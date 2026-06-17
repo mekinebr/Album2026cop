@@ -1,4 +1,4 @@
-const CACHE = 'album-copa2026-firebase-trocas-v2';
+const CACHE = 'album-copa2026-google-final-v3';
 
 const ASSETS = [
   './',
@@ -14,20 +14,15 @@ const ASSETS = [
 
 self.addEventListener('install', event => {
   self.skipWaiting();
-
   event.waitUntil(
-    caches.open(CACHE)
-      .then(cache => cache.addAll(ASSETS))
-      .catch(() => {})
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS)).catch(() => {})
   );
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.map(key => key !== CACHE ? caches.delete(key) : null)
-      ))
+      .then(keys => Promise.all(keys.map(key => key !== CACHE ? caches.delete(key) : null)))
       .then(() => self.clients.claim())
   );
 });
@@ -37,7 +32,6 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
 
-  // Firebase, Google login e APIs externas sempre pela internet
   if (
     url.hostname.includes('firebase') ||
     url.hostname.includes('google') ||
@@ -48,7 +42,6 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // HTML sempre tenta buscar versão nova primeiro
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
@@ -62,7 +55,6 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Arquivos do app: rede primeiro, cache se estiver offline
   event.respondWith(
     fetch(event.request, { cache: 'no-store' })
       .then(response => {
