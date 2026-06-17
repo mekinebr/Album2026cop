@@ -99,3 +99,379 @@
   .bottom-nav-photo{grid-template-columns:repeat(6,1fr) !important;padding:6px 4px calc(6px + env(safe-area-inset-bottom)) !important;border-radius:17px 17px 0 0 !important}.bottom-nav-photo button{min-height:50px !important;font-size:18px !important;border-radius:12px !important;padding:4px 1px !important}.bottom-nav-photo span{font-size:8px !important}
 }
 @media(max-width:390px){.top-grid{grid-template-columns:1fr !important}.group-selector{grid-template-columns:1fr 1fr !important}.stats-grid-big{grid-template-columns:repeat(4,1fr) !important}}
+
+
+
+/* =========================================================
+   COMPACTAÇÃO FORTE FINAL - TOPO, LOGIN, TROCAS E PROGRESSO
+   Cole como parte do style.css completo. Não usar sozinho.
+========================================================= */
+
+/* PC / NOTEBOOK */
+@media(min-width:621px){
+
+  .app-shell{
+    max-width:900px !important;
+    padding:10px 12px 92px !important;
+  }
+
+  .hero-header{
+    margin-bottom:8px !important;
+    gap:10px !important;
+  }
+
+  .brand-area{
+    gap:10px !important;
+  }
+
+  .trophy-icon{
+    font-size:36px !important;
+  }
+
+  .hero-header h1{
+    font-size:26px !important;
+    line-height:1 !important;
+  }
+
+  .hero-header p{
+    font-size:12px !important;
+    margin-top:3px !important;
+  }
+
+  .history-actions{
+    gap:8px !important;
+  }
+
+  .history-actions button,
+  .history-upload{
+    min-height:36px !important;
+    padding:7px 14px !important;
+    font-size:11px !important;
+    border-radius:11px !important;
+  }
+
+  .top-grid{
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    margin-bottom:10px !important;
+    align-items:start !important;
+  }
+
+  .account-card,
+  .trade-hero-card{
+    padding:12px !important;
+    border-radius:18px !important;
+    min-height:0 !important;
+    height:auto !important;
+  }
+
+  .account-view{
+    gap:10px !important;
+    margin-bottom:7px !important;
+  }
+
+  .profile-avatar{
+    width:52px !important;
+    height:52px !important;
+    min-width:52px !important;
+    font-size:26px !important;
+    border-width:2px !important;
+    box-shadow:0 0 0 5px rgba(34,197,94,.05) !important;
+  }
+
+  .account-info strong{
+    font-size:11px !important;
+  }
+
+  .account-info h2{
+    font-size:18px !important;
+    margin:3px 0 2px !important;
+    line-height:1.05 !important;
+  }
+
+  .account-info p{
+    font-size:10px !important;
+    line-height:1.15 !important;
+  }
+
+  .online-pill{
+    padding:4px 8px !important;
+    font-size:10px !important;
+    margin-top:4px !important;
+  }
+
+  .logged-user-box{
+    padding:6px 8px !important;
+    margin-bottom:8px !important;
+    border-radius:12px !important;
+    font-size:11px !important;
+  }
+
+  .danger-btn-small{
+    padding:5px 8px !important;
+    font-size:10px !important;
+    border-radius:8px !important;
+  }
+
+  .login-card-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+
+  .login-panel{
+    padding:8px !important;
+    border-radius:13px !important;
+    min-height:0 !important;
+  }
+
+  .login-panel h3{
+    font-size:12px !important;
+    margin:0 0 6px !important;
+  }
+
+  .login-panel p{
+    font-size:9px !important;
+    line-height:1.15 !important;
+    margin:0 0 5px !important;
+  }
+
+  .login-panel input{
+    min-height:30px !important;
+    height:30px !important;
+    padding:6px 9px !important;
+    font-size:11px !important;
+    margin-bottom:5px !important;
+    border-radius:9px !important;
+  }
+
+  .login-panel button{
+    min-height:31px !important;
+    height:auto !important;
+    padding:6px 8px !important;
+    font-size:11px !important;
+    margin-top:5px !important;
+    border-radius:9px !important;
+    line-height:1.1 !important;
+  }
+
+  .google-btn,
+  .anon-btn{
+    min-height:30px !important;
+    font-size:11px !important;
+  }
+
+  .trade-hero-card{
+    max-height:190px !important;
+    overflow:hidden !important;
+  }
+
+  .trade-title{
+    gap:9px !important;
+    margin-bottom:8px !important;
+  }
+
+  .trade-title span{
+    width:36px !important;
+    height:36px !important;
+    font-size:25px !important;
+  }
+
+  .trade-title h2{
+    font-size:15px !important;
+    line-height:1.05 !important;
+  }
+
+  .trade-title p{
+    font-size:10px !important;
+    margin-top:3px !important;
+  }
+
+  .trade-mini-stats{
+    margin-bottom:8px !important;
+    border-radius:11px !important;
+  }
+
+  .trade-mini-stats div{
+    padding:7px 3px !important;
+  }
+
+  .trade-mini-stats b{
+    font-size:20px !important;
+    line-height:1 !important;
+  }
+
+  .trade-mini-stats small{
+    font-size:9px !important;
+  }
+
+  .open-trades-btn{
+    min-height:34px !important;
+    padding:7px 10px !important;
+    font-size:12px !important;
+    border-radius:10px !important;
+  }
+
+  .progress-hero{
+    grid-template-columns:105px 1fr 1.05fr !important;
+    gap:10px !important;
+    padding:12px 14px !important;
+    margin:0 0 10px !important;
+    border-radius:18px !important;
+    min-height:0 !important;
+  }
+
+  .circle-ring{
+    width:88px !important;
+    height:88px !important;
+    box-shadow:0 0 0 7px rgba(34,197,94,.06) !important;
+  }
+
+  .circle-ring strong{
+    font-size:27px !important;
+  }
+
+  .circle-ring span{
+    font-size:10px !important;
+    margin-top:-15px !important;
+  }
+
+  .progress-main-info h2{
+    font-size:13px !important;
+    margin:0 0 6px !important;
+  }
+
+  .progress{
+    height:9px !important;
+  }
+
+  .progress-main-info p{
+    font-size:10px !important;
+    margin:6px 0 7px !important;
+  }
+
+  .stats-link-btn{
+    min-height:31px !important;
+    padding:6px 10px !important;
+    font-size:11px !important;
+    border-radius:9px !important;
+  }
+
+  .stats-grid-big{
+    gap:8px !important;
+  }
+
+  .stat-big{
+    min-height:62px !important;
+    padding:7px 8px !important;
+    border-radius:12px !important;
+    gap:6px !important;
+  }
+
+  .stat-big span{
+    font-size:21px !important;
+  }
+
+  .stat-big b{
+    font-size:24px !important;
+    margin-left:0 !important;
+  }
+
+  .stat-big small{
+    font-size:11px !important;
+    margin-left:0 !important;
+  }
+
+  .search-row{
+    margin-bottom:8px !important;
+  }
+
+  .tools-card{
+    grid-template-columns:1fr 190px 72px !important;
+    gap:8px !important;
+  }
+
+  .tools-card input,
+  .tools-card select,
+  .tools-card button{
+    min-height:38px !important;
+    padding:7px 10px !important;
+    font-size:11px !important;
+    border-radius:11px !important;
+  }
+
+  .help-card{
+    padding:7px 9px !important;
+    margin-bottom:8px !important;
+    border-radius:13px !important;
+  }
+
+  .help-card b{
+    font-size:11px !important;
+  }
+
+  .help-card span{
+    padding:4px 7px !important;
+    font-size:10px !important;
+  }
+
+  .bottom-nav-photo{
+    max-width:900px !important;
+  }
+}
+
+/* CELULAR */
+@media(max-width:620px){
+
+  .top-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .account-card,
+  .trade-hero-card,
+  .progress-hero{
+    padding:10px !important;
+    border-radius:16px !important;
+  }
+
+  .trade-hero-card{
+    max-height:160px !important;
+    overflow:hidden !important;
+  }
+
+  .progress-hero{
+    grid-template-columns:68px 1fr !important;
+    gap:8px !important;
+  }
+
+  .circle-ring{
+    width:62px !important;
+    height:62px !important;
+  }
+
+  .circle-ring strong{
+    font-size:20px !important;
+  }
+
+  .stats-grid-big{
+    grid-template-columns:repeat(4,1fr) !important;
+    gap:5px !important;
+  }
+
+  .stat-big{
+    min-height:48px !important;
+    padding:4px 2px !important;
+  }
+
+  .stat-big span{
+    font-size:14px !important;
+  }
+
+  .stat-big b{
+    font-size:16px !important;
+  }
+
+  .stat-big small{
+    font-size:7px !important;
+  }
+}
