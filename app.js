@@ -18,6 +18,7 @@ let viewStack=['groups'];
 let deferredInstallPrompt=null;
 let holdTimer=null;
 let holdFired=false;
+const recentUpdates=JSON.parse(localStorage.getItem('albumRecentUpdates')||'[]');
 
 // FIREBASE CLOUD SYNC
 let cloudUser=null;
@@ -45,6 +46,7 @@ function migrateState(old){
 function persist(){
   localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
   localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
+  localStorage.setItem('albumRecentUpdates',JSON.stringify(recentUpdates.slice(0,10)));
   scheduleCloudSave();
 }
 
@@ -149,6 +151,12 @@ async function loadCloudAlbum(user){
 }
 
 window.addEventListener('album-auth-changed',(event)=>{
+  const accountName=document.getElementById('accountNameLabel');
+  const pill=document.getElementById('accountOnlinePill');
+  const u=event.detail && event.detail.user ? event.detail.user : null;
+  if(accountName) accountName.textContent=u?(u.displayName||u.email||(u.isAnonymous?'Anônimo':'Colecionador')):'Colecionador';
+  if(pill){pill.textContent=u?'Online':'Offline';pill.style.background=u?'rgba(34,197,94,.28)':'rgba(239,68,68,.22)';}
+
   const user=event.detail && event.detail.user ? event.detail.user : null;
 
   if(user){
@@ -539,12 +547,30 @@ function setupInstall(){
   });
 }
 
+function renderRecentUpdates(){
+  const box=document.getElementById('recentUpdates');
+  if(!box)return;
+  if(!recentUpdates.length){
+    box.innerHTML='<div class="update-row"><span class="up-have">✅</span><div><b>Seu álbum está pronto</b><small>Marque figurinhas para ver seu histórico aqui.</small></div></div>';
+    return;
+  }
+  box.innerHTML=recentUpdates.slice(0,5).map(u=>{
+    const q=Number(u.qty||0);
+    const icon=q===0?'❌':q===1?'✅':'🔁';
+    const cls=q===0?'up-missing':q===1?'up-have':'up-repeat';
+    const action=q===0?'marcou como faltando':q===1?'marcou':'marcou como repetida x'+(q-1);
+    const time=new Date(u.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div class="update-row"><span class="${cls}">${icon}</span><div><b>Você ${action} <mark>${u.code} ${u.number}</mark></b><small>${time}</small></div></div>`;
+  }).join('');
+}
+
 function render(){
   renderDashboard();
   renderGroups();
   renderBoards();
   renderLists();
   renderStats();
+  renderRecentUpdates();
   persist();
 }
 
