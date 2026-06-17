@@ -9,7 +9,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 
 import {
@@ -38,17 +40,11 @@ providerGoogle.setCustomParameters({
 
 const $ = (s) => document.querySelector(s);
 
+let authReady = false;
+
 function setAuthStatus(text){
   const el = $("#authStatus");
   if(el) el.textContent = text;
-}
-
-function notifyAuthChanged(user){
-  setLoggedUser(user);
-  window.albumFirebaseUser = user || null;
-  window.dispatchEvent(new CustomEvent("album-auth-changed", {
-    detail: { user: user || null }
-  }));
 }
 
 function setLoggedUser(user){
@@ -73,13 +69,40 @@ function setLoggedUser(user){
   }
 }
 
+function notifyAuthChanged(user){
+  setLoggedUser(user);
+  window.albumFirebaseUser = user || null;
+  window.dispatchEvent(new CustomEvent("album-auth-changed", {
+    detail: { user: user || null }
+  }));
+}
+
+async function prepareAuth(){
+  if(authReady) return;
+
+  try{
+    await setPersistence(auth, browserLocalPersistence);
+    authReady = true;
+  }catch(error){
+    console.error("Erro ao definir persistência do Firebase:", error);
+    authReady = true;
+  }
+}
+
 async function loginGoogle(){
   try{
+    await prepareAuth();
     setAuthStatus("Abrindo login Google...");
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if(isMobile){
+      await signInWithRedirect(auth, providerGoogle);
+      return;
+    }
 
     try{
       const result = await signInWithPopup(auth, providerGoogle);
-
       if(result && result.user){
         notifyAuthChanged(result.user);
       }
@@ -89,13 +112,14 @@ async function loginGoogle(){
     }
   }catch(error){
     console.error("Erro login Google:", error);
-    alert("Não foi possível entrar com Google. Confira domínio autorizado, provedor Google ativo e cache do site.");
+    alert("Não foi possível entrar com Google. Confira domínio autorizado e cache do site.");
     setAuthStatus("Erro ao entrar com Google.");
   }
 }
 
 async function loginAnonimo(){
   try{
+    await prepareAuth();
     setAuthStatus("Entrando como anônimo...");
     const result = await signInAnonymously(auth);
 
@@ -119,6 +143,7 @@ async function loginEmail(){
   }
 
   try{
+    await prepareAuth();
     setAuthStatus("Entrando com e-mail...");
     const result = await signInWithEmailAndPassword(auth, email, senha);
 
@@ -147,6 +172,7 @@ async function criarContaEmail(){
   }
 
   try{
+    await prepareAuth();
     setAuthStatus("Criando conta...");
     const result = await createUserWithEmailAndPassword(auth, email, senha);
 
@@ -182,26 +208,31 @@ function setupAuthButtons(){
   });
 }
 
-// Corrige retorno do login Google por redirect.
-// Isso garante que o app.js receba o usuário e salve/carregue o álbum na nuvem.
-getRedirectResult(auth)
-  .then((result) => {
+async function initFirebaseAuth(){
+  await prepareAuth();
+
+  try{
+    const result = await getRedirectResult(auth);
     if(result && result.user){
       notifyAuthChanged(result.user);
     }
-  })
-  .catch((error)=>{
+  }catch(error){
     console.error("Erro redirect Google:", error);
-  });
+  }
 
-onAuthStateChanged(auth, (user)=>{
-  notifyAuthChanged(user);
-});
+  onAuthStateChanged(auth, (user)=>{
+    notifyAuthChanged(user);
+  });
+}
 
 // Se ninguém estiver logado, deixa o usuário escolher.
 // Não força login anônimo automático aqui, para não atrapalhar Google/e-mail.
 if(document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", setupAuthButtons);
+  document.addEventListener("DOMContentLoaded", () => {
+    setupAuthButtons();
+    initFirebaseAuth();
+  });
 }else{
   setupAuthButtons();
+  initFirebaseAuth();
 }
