@@ -1,27 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="theme-color" content="#22c55e"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#22c55e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Álbum Copa 2026</title>
-<link rel="stylesheet" href="./style.css?v=cc14-rep-x1"/>
+<link rel="stylesheet" href="./style.css?v=firebase-trocas-v1"/>
 <link rel="manifest" href="./manifest.json"/>
 <link rel="apple-touch-icon" href="./icons/icon-192.png"/>
 </head>
+
 <body>
 <main class="app-shell">
-<header class="topbar">
-  <div><span class="eyebrow">Checklist rápido de figurinhas</span><h1>🏆 Álbum Copa 2026</h1>
 
-<div class="history-actions">
-  <button id="downloadHistoryBtn" type="button">⬇️ Baixar histórico</button>
-  <label class="history-upload">⬆️ Carregar histórico
-    <input id="uploadHistoryInput" type="file" accept="application/json,.json">
-  </label>
-</div>
-</div>
+<header class="topbar">
+  <div>
+    <span class="eyebrow">Checklist rápido de figurinhas</span>
+    <h1>🏆 Álbum Copa 2026</h1>
+
+    <div class="history-actions">
+      <button id="downloadHistoryBtn" type="button">⬇️ Baixar histórico</button>
+      <label class="history-upload">⬆️ Carregar histórico
+        <input id="uploadHistoryInput" type="file" accept="application/json,.json">
+      </label>
+    </div>
+  </div>
+
   <button id="themeBtn" class="icon-btn">🌙</button>
 </header>
+
+<section class="auth-card">
+  <div class="auth-head">
+    <div>
+      <b>🔐 Conta do colecionador</b>
+      <p id="authStatus">Entre para usar trocas, chat e perfil online.</p>
+    </div>
+  </div>
+
+  <div class="auth-actions">
+    <button id="googleLoginBtn" type="button">🔵 Entrar com Google</button>
+    <button id="anonLoginBtn" type="button" class="ghost">👤 Entrar anônimo</button>
+  </div>
+
+  <div class="email-login-box">
+    <input id="emailLoginInput" type="email" placeholder="E-mail"/>
+    <input id="passwordLoginInput" type="password" placeholder="Senha"/>
+    <div class="auth-actions">
+      <button id="emailLoginBtn" type="button">📧 Entrar com e-mail</button>
+      <button id="emailRegisterBtn" type="button" class="ghost">➕ Criar conta</button>
+    </div>
+  </div>
+
+  <div id="loggedUserBox" class="logged-user-box" style="display:none">
+    <span id="loggedUserText">Usuário conectado</span>
+    <button id="logoutBtn" type="button" class="danger-btn-small">Sair</button>
+  </div>
+</section>
 
 <a class="ad-banner" href="https://wa.me/5592992800688" target="_blank" rel="noopener">
   <b>📺 Tenha tudo em um só lugar</b>
@@ -30,7 +66,10 @@
 </a>
 
 <section class="install-card">
-  <div><b>📲 Instalar como aplicativo</b><p>Android/PC: toque em Instalar. Se não abrir, use Chrome → ⋮ → Instalar aplicativo.</p></div>
+  <div>
+    <b>📲 Instalar como aplicativo</b>
+    <p>Android/PC: toque em Instalar. Se não abrir, use Chrome → ⋮ → Instalar aplicativo.</p>
+  </div>
   <button id="installBtn" type="button">Instalar</button>
 </section>
 
@@ -41,11 +80,17 @@
 </section>
 
 <section class="dashboard">
-<div class="progress-card"><div class="card-title">Progresso geral</div><strong id="percent">0%</strong><div class="progress"><i id="barFill"></i></div><p id="progressText">0 marcadas</p></div>
-<button class="stat have" data-view="stats"><span>✅</span><b id="haveCount">0</b><small>Tenho</small></button>
-<button class="stat missing" data-view="missing"><span>❌</span><b id="missingCount">0</b><small>Me falta</small></button>
-<button class="stat repeat" data-view="repeats"><span>🔁</span><b id="repeatCount">0</b><small>Repetidas</small></button>
-<button class="stat total" data-view="groups"><span>📒</span><b id="totalCount">0</b><small>Total</small></button>
+  <div class="progress-card">
+    <div class="card-title">Progresso geral</div>
+    <strong id="percent">0%</strong>
+    <div class="progress"><i id="barFill"></i></div>
+    <p id="progressText">0 marcadas</p>
+  </div>
+
+  <button class="stat have" data-view="stats"><span>✅</span><b id="haveCount">0</b><small>Tenho</small></button>
+  <button class="stat missing" data-view="missing"><span>❌</span><b id="missingCount">0</b><small>Me falta</small></button>
+  <button class="stat repeat" data-view="repeats"><span>🔁</span><b id="repeatCount">0</b><small>Repetidas</small></button>
+  <button class="stat total" data-view="groups"><span>📒</span><b id="totalCount">0</b><small>Total</small></button>
 </section>
 
 <section class="help-card">
@@ -57,17 +102,136 @@
 </section>
 
 <section id="view-groups" class="app-view active">
-<section class="tools-card"><input id="searchInput" placeholder="Buscar global: BRA 11, Brasil, FWC 00, CC 2..."/><select id="statusFilter"><option value="all">Todos</option><option value="missing">Me falta</option><option value="have">Tenho</option><option value="repeat">Repetidas</option></select><button id="clearGroupBtn" class="ghost">Limpar</button></section>
-<div id="searchResults" style="display:none"></div>
-<section class="section-card group-section"><div class="section-head"><h2>Escolha o grupo</h2><p>Agora aparece somente as siglas das 4 seleções.</p></div><div id="groupSelector" class="group-selector"></div></section>
+  <section class="tools-card">
+    <input id="searchInput" placeholder="Buscar global: BRA 11, Brasil, FWC 00, CC 2..."/>
+    <select id="statusFilter">
+      <option value="all">Todos</option>
+      <option value="missing">Me falta</option>
+      <option value="have">Tenho</option>
+      <option value="repeat">Repetidas</option>
+    </select>
+    <button id="clearGroupBtn" class="ghost">Limpar</button>
+  </section>
 
-<section id="activeInfo" class="active-info"></section><section id="bingoGrid" class="bingo-grid"></section>
+  <div id="searchResults" style="display:none"></div>
+
+  <section class="section-card group-section">
+    <div class="section-head">
+      <h2>Escolha o grupo</h2>
+      <p>Agora aparece somente as siglas das 4 seleções.</p>
+    </div>
+    <div id="groupSelector" class="group-selector"></div>
+  </section>
+
+  <section id="activeInfo" class="active-info"></section>
+  <section id="bingoGrid" class="bingo-grid"></section>
 </section>
 
-<section id="view-missing" class="app-view"><section class="section-card"><div class="section-head"><h2>❌ Me falta</h2><p>Por grupo e seleção.</p></div><div class="trade-actions"><button id="copyMissingBtn" class="ghost">📋 Copiar Me Faltam</button><button id="shareMissingBtn">📲 WhatsApp Me Faltam</button></div><div id="missingPanel" class="list-panel"></div></section></section>
-<section id="view-repeats" class="app-view"><section class="section-card"><div class="section-head"><h2>🔁 Repetidas</h2><p>Quantidade ilimitada: x2, x3, x4...</p></div><div class="trade-actions"><button id="copyRepeatsBtn" class="ghost">📋 Copiar Repetidas</button><button id="shareRepeatsBtn">📲 WhatsApp Repetidas</button></div><div id="repeatPanel" class="list-panel"></div></section></section>
-<section id="view-stats" class="app-view"><section class="section-card"><div class="section-head"><h2>📊 Estatísticas</h2><p>Top 10, menos completas e colagens por dia.</p></div><div id="statsPanel" class="stats-panel"></div></section></section>
+<section id="view-missing" class="app-view">
+  <section class="section-card">
+    <div class="section-head">
+      <h2>❌ Me falta</h2>
+      <p>Por grupo e seleção.</p>
+    </div>
+    <div class="trade-actions">
+      <button id="copyMissingBtn" class="ghost">📋 Copiar Me Faltam</button>
+      <button id="shareMissingBtn">📲 WhatsApp Me Faltam</button>
+    </div>
+    <div id="missingPanel" class="list-panel"></div>
+  </section>
+</section>
+
+<section id="view-repeats" class="app-view">
+  <section class="section-card">
+    <div class="section-head">
+      <h2>🔁 Repetidas</h2>
+      <p>Quantidade ilimitada: x1, x2, x3...</p>
+    </div>
+    <div class="trade-actions">
+      <button id="copyRepeatsBtn" class="ghost">📋 Copiar Repetidas</button>
+      <button id="shareRepeatsBtn">📲 WhatsApp Repetidas</button>
+    </div>
+    <div id="repeatPanel" class="list-panel"></div>
+  </section>
+</section>
+
+<section id="view-stats" class="app-view">
+  <section class="section-card">
+    <div class="section-head">
+      <h2>📊 Estatísticas</h2>
+      <p>Top 10, menos completas e colagens por dia.</p>
+    </div>
+    <div id="statsPanel" class="stats-panel"></div>
+  </section>
+</section>
+
+<section id="view-trades" class="app-view">
+  <section class="section-card">
+    <div class="section-head">
+      <h2>🌍 Trocas próximas</h2>
+      <p>Crie seu perfil, permita localização e encontre colecionadores próximos para trocar figurinhas.</p>
+    </div>
+
+    <div class="trade-online-grid">
+      <div class="trade-profile-card">
+        <h3>👤 Meu perfil de troca</h3>
+
+        <input id="tradeNick" placeholder="Seu nick/apelido"/>
+        <input id="tradeWhatsapp" placeholder="WhatsApp opcional: 5592999999999"/>
+        <input id="tradeCity" placeholder="Cidade/bairro opcional"/>
+
+        <div class="trade-actions">
+          <button id="saveTradeProfileBtn" type="button">💾 Salvar perfil</button>
+          <button id="publishTradeProfileBtn" type="button" class="ghost">📍 Publicar localização</button>
+        </div>
+
+        <small class="muted-text">
+          A localização serve apenas para calcular distância aproximada. Não mostramos seu endereço exato.
+        </small>
+
+        <button id="deleteTradeProfileBtn" type="button" class="danger-btn">🗑️ Apagar perfil online</button>
+      </div>
+
+      <div class="trade-profile-card">
+        <h3>🔎 Encontrar pessoas</h3>
+
+        <select id="tradeRadius">
+          <option value="1">Até 1 km</option>
+          <option value="3">Até 3 km</option>
+          <option value="5" selected>Até 5 km</option>
+          <option value="10">Até 10 km</option>
+          <option value="50">Até 50 km</option>
+          <option value="9999">Todo Brasil</option>
+        </select>
+
+        <button id="findNearbyBtn" type="button">🌍 Encontrar pessoas próximas</button>
+
+        <p id="tradeStatus" class="trade-status">Entre na sua conta para usar as trocas.</p>
+      </div>
+    </div>
+
+    <div class="trade-map-box">
+      <h3>📍 Pessoas próximas</h3>
+      <div id="nearbyPeople" class="nearby-list">
+        <div class="notice">Salve seu perfil e permita localização para encontrar pessoas próximas.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="section-head">
+      <h2>💬 Mensagens</h2>
+      <p>Converse com outros colecionadores para combinar a troca.</p>
+    </div>
+
+    <div id="chatBox" class="chat-box">
+      <div class="notice">Selecione uma pessoa próxima para abrir o chat.</div>
+    </div>
+  </section>
+</section>
+
 </main>
+
 <nav class="bottom-nav">
   <button data-view="groups" class="active">🏠<span>Início</span></button>
   <button id="backBtn">⬅️<span>Voltar</span></button>
@@ -75,6 +239,11 @@
   <button data-view="missing">❌<span>Faltam</span></button>
   <button data-view="repeats">🔁<span>Repetidas</span></button>
   <button data-view="stats">📊<span>Status</span></button>
+  <button data-view="trades">🌍<span>Trocas</span></button>
 </nav>
+
 <script src="./app.js?v=cc14-rep-x1"></script>
-</body></html>
+<script type="module" src="./firebase.js?v=login1"></script>
+<script type="module" src="./firebase-trades.js?v=trocas1"></script>
+</body>
+</html>
