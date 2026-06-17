@@ -1,9 +1,10 @@
 {
+  "id": "/",
   "name": "Álbum Copa 2026",
   "short_name": "Álbum 2026",
-  "description": "Controle de figurinhas da Copa do Mundo 2026 com faltantes, repetidas, estatísticas e histórico.",
-  "start_url": "/",
-  "scope": "/",
+  "description": "Controle de figurinhas da Copa do Mundo 2026 com trocas, chat, GPS, repetidas, faltantes e backup.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "display_override": [
     "standalone",
@@ -15,7 +16,8 @@
   "lang": "pt-BR",
   "categories": [
     "sports",
-    "utilities"
+    "utilities",
+    "social"
   ],
   "icons": [
     {
@@ -53,7 +55,17 @@
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "Trocas",
+      "short_name": "Trocas",
+      "url": "./index.html#trocas",
+      "icons": [
+        {
+          "src": "./icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
-  ],
-  "id": "/"
+  ]
 }
