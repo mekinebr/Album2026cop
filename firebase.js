@@ -32,12 +32,23 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 const providerGoogle = new GoogleAuthProvider();
+providerGoogle.setCustomParameters({
+  prompt: "select_account"
+});
 
 const $ = (s) => document.querySelector(s);
 
 function setAuthStatus(text){
   const el = $("#authStatus");
   if(el) el.textContent = text;
+}
+
+function notifyAuthChanged(user){
+  setLoggedUser(user);
+  window.albumFirebaseUser = user || null;
+  window.dispatchEvent(new CustomEvent("album-auth-changed", {
+    detail: { user: user || null }
+  }));
 }
 
 function setLoggedUser(user){
@@ -54,7 +65,7 @@ function setLoggedUser(user){
       (user.isAnonymous ? "Usuário anônimo" : "Colecionador");
 
     text.textContent = "Conectado: " + name;
-    setAuthStatus("Conta conectada. Trocas e chat liberados.");
+    setAuthStatus("Conta conectada. Álbum, trocas e chat liberados.");
   }else{
     box.style.display = "none";
     text.textContent = "";
@@ -67,13 +78,18 @@ async function loginGoogle(){
     setAuthStatus("Abrindo login Google...");
 
     try{
-      await signInWithPopup(auth, providerGoogle);
+      const result = await signInWithPopup(auth, providerGoogle);
+
+      if(result && result.user){
+        notifyAuthChanged(result.user);
+      }
     }catch(popupError){
+      console.warn("Popup falhou, tentando redirect:", popupError);
       await signInWithRedirect(auth, providerGoogle);
     }
   }catch(error){
-    console.error(error);
-    alert("Não foi possível entrar com Google. Verifique se o provedor Google está ativado no Firebase.");
+    console.error("Erro login Google:", error);
+    alert("Não foi possível entrar com Google. Confira domínio autorizado, provedor Google ativo e cache do site.");
     setAuthStatus("Erro ao entrar com Google.");
   }
 }
@@ -81,9 +97,13 @@ async function loginGoogle(){
 async function loginAnonimo(){
   try{
     setAuthStatus("Entrando como anônimo...");
-    await signInAnonymously(auth);
+    const result = await signInAnonymously(auth);
+
+    if(result && result.user){
+      notifyAuthChanged(result.user);
+    }
   }catch(error){
-    console.error(error);
+    console.error("Erro login anônimo:", error);
     alert("Erro no login anônimo. Ative Anonymous no Firebase Authentication.");
     setAuthStatus("Erro no login anônimo.");
   }
@@ -100,9 +120,13 @@ async function loginEmail(){
 
   try{
     setAuthStatus("Entrando com e-mail...");
-    await signInWithEmailAndPassword(auth, email, senha);
+    const result = await signInWithEmailAndPassword(auth, email, senha);
+
+    if(result && result.user){
+      notifyAuthChanged(result.user);
+    }
   }catch(error){
-    console.error(error);
+    console.error("Erro login e-mail:", error);
     alert("Erro ao entrar. Confira e-mail/senha ou crie uma conta.");
     setAuthStatus("Erro no login por e-mail.");
   }
@@ -124,9 +148,13 @@ async function criarContaEmail(){
 
   try{
     setAuthStatus("Criando conta...");
-    await createUserWithEmailAndPassword(auth, email, senha);
+    const result = await createUserWithEmailAndPassword(auth, email, senha);
+
+    if(result && result.user){
+      notifyAuthChanged(result.user);
+    }
   }catch(error){
-    console.error(error);
+    console.error("Erro criar conta:", error);
     alert("Erro ao criar conta. Talvez esse e-mail já exista ou o login por e-mail não esteja ativado.");
     setAuthStatus("Erro ao criar conta.");
   }
@@ -135,9 +163,9 @@ async function criarContaEmail(){
 async function sairConta(){
   try{
     await signOut(auth);
-    setLoggedUser(null);
+    notifyAuthChanged(null);
   }catch(error){
-    console.error(error);
+    console.error("Erro ao sair:", error);
     alert("Erro ao sair da conta.");
   }
 }
@@ -154,14 +182,20 @@ function setupAuthButtons(){
   });
 }
 
-getRedirectResult(auth).catch((error)=>{
-  console.error(error);
-});
+// Corrige retorno do login Google por redirect.
+// Isso garante que o app.js receba o usuário e salve/carregue o álbum na nuvem.
+getRedirectResult(auth)
+  .then((result) => {
+    if(result && result.user){
+      notifyAuthChanged(result.user);
+    }
+  })
+  .catch((error)=>{
+    console.error("Erro redirect Google:", error);
+  });
 
 onAuthStateChanged(auth, (user)=>{
-  setLoggedUser(user);
-  window.albumFirebaseUser = user || null;
-  window.dispatchEvent(new CustomEvent("album-auth-changed", { detail: { user } }));
+  notifyAuthChanged(user);
 });
 
 // Se ninguém estiver logado, deixa o usuário escolher.
