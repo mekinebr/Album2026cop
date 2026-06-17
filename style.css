@@ -448,3 +448,272 @@ body.dark .install-help{
     min-width:100%;
   }
 }
+
+
+/* VISUAL MELHORADO - LOGIN, DASHBOARD E MENU */
+.auth-card-v2{
+  padding:14px !important;
+  border-radius:22px !important;
+  background:linear-gradient(180deg,rgba(37,99,235,.10),rgba(34,197,94,.04)),var(--card) !important;
+}
+
+.auth-title-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.auth-title-row b{
+  font-size:18px;
+}
+
+.auth-title-row p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.auth-grid-v2{
+  display:grid;
+  grid-template-columns:1.2fr .8fr;
+  gap:10px;
+}
+
+.login-panel{
+  border:1px solid var(--line);
+  background:rgba(120,130,150,.06);
+  border-radius:18px;
+  padding:12px;
+}
+
+.login-panel h3{
+  margin:0 0 9px;
+  font-size:15px;
+}
+
+.login-panel p{
+  margin:0 0 10px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}
+
+.login-panel input{
+  margin-bottom:8px;
+  min-height:45px;
+}
+
+.main-login-btn,
+.create-account-btn,
+.google-btn,
+.anon-btn{
+  width:100%;
+  min-height:48px;
+  border-radius:15px !important;
+  font-size:14px;
+  font-weight:900;
+}
+
+.main-login-btn{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+}
+
+.create-account-btn{
+  background:linear-gradient(135deg,#22c55e,#16a34a) !important;
+}
+
+.login-divider{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:12px 0;
+  color:var(--muted);
+  font-weight:900;
+  font-size:12px;
+  text-transform:uppercase;
+}
+
+.login-divider::before,
+.login-divider::after{
+  content:"";
+  height:1px;
+  background:var(--line);
+  flex:1;
+}
+
+.login-divider span{
+  padding:0 8px;
+}
+
+.quick-login-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.google-btn{
+  background:linear-gradient(135deg,#2563eb,#60a5fa) !important;
+}
+
+.anon-btn{
+  background:rgba(120,130,150,.10) !important;
+  color:var(--text) !important;
+  border:1px solid var(--line) !important;
+}
+
+.auth-help-text{
+  display:block;
+  margin-top:10px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.logged-user-box{
+  min-width:260px;
+  margin:0 !important;
+  border-radius:16px !important;
+}
+
+/* dashboard mais limpo */
+.dashboard{
+  grid-template-columns:1.4fr repeat(2,1fr) !important;
+  gap:12px !important;
+}
+
+.progress-card,
+.stat{
+  border-radius:20px !important;
+}
+
+.stat{
+  min-height:78px;
+  display:flex !important;
+  align-items:center;
+  gap:8px;
+}
+
+.stat span{
+  font-size:24px !important;
+}
+
+.stat b{
+  font-size:30px !important;
+  line-height:1;
+}
+
+.stat small{
+  font-size:12px !important;
+  font-weight:900;
+}
+
+/* menu inferior melhorado */
+.bottom-nav-v2{
+  grid-template-columns:repeat(6,1fr) !important;
+  padding:9px 8px calc(9px + env(safe-area-inset-bottom)) !important;
+  gap:7px !important;
+}
+
+.bottom-nav-v2 button{
+  min-height:54px !important;
+  border-radius:18px !important;
+  font-size:18px !important;
+  padding:7px 4px !important;
+  display:flex !important;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+}
+
+.bottom-nav-v2 span{
+  font-size:11px !important;
+  margin-top:0 !important;
+}
+
+.floating-back{
+  display:none;
+  margin-bottom:10px;
+  background:rgba(120,130,150,.12) !important;
+  color:var(--text) !important;
+  border:1px solid var(--line) !important;
+  border-radius:14px !important;
+  padding:9px 13px !important;
+}
+
+/* mobile */
+@media(max-width:820px){
+  body{
+    padding-bottom:92px !important;
+  }
+
+  .auth-title-row{
+    display:grid;
+  }
+
+  .logged-user-box{
+    min-width:0;
+    width:100%;
+  }
+
+  .auth-grid-v2{
+    grid-template-columns:1fr;
+  }
+
+  .quick-login-row{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .progress-card{
+    grid-column:1/-1 !important;
+  }
+
+  .stat{
+    min-height:72px;
+    padding:11px !important;
+  }
+
+  .stat b{
+    font-size:28px !important;
+  }
+
+  .bottom-nav-v2{
+    grid-template-columns:repeat(6,1fr) !important;
+    overflow:visible !important;
+    gap:4px !important;
+    padding-left:5px !important;
+    padding-right:5px !important;
+  }
+
+  .bottom-nav-v2 button{
+    min-width:0 !important;
+    min-height:50px !important;
+    font-size:16px !important;
+    border-radius:15px !important;
+  }
+
+  .bottom-nav-v2 span{
+    font-size:9px !important;
+  }
+
+  .floating-back{
+    display:inline-flex;
+  }
+}
+
+@media(max-width:390px){
+  .bottom-nav-v2 button{
+    min-height:48px !important;
+    font-size:15px !important;
+    padding:6px 1px !important;
+  }
+
+  .bottom-nav-v2 span{
+    font-size:8px !important;
+  }
+}
