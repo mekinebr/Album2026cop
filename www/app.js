@@ -2,7 +2,7 @@ const GROUPS={"A": [["México", "MEX"], ["África do Sul", "RSA"], ["República 
 const TOTAL_PER_TEAM=20;
 const EXTRA_SECTIONS=[
   {key:'FWC',name:'Figurinhas FWC',group:'Especiais',code:'FWC',numbers:['00',...Array.from({length:19},(_,i)=>String(i+1))]},
-  {key:'CC',name:'Coca-Cola',group:'Especiais',code:'CC',numbers:Array.from({length:8},(_,i)=>String(i+1))}
+  {key:'CC',name:'Coca-Cola',group:'Especiais',code:'CC',numbers:Array.from({length:14},(_,i)=>String(i+1))}
 ];
 
 const OLD_STATE=JSON.parse(localStorage.getItem('albumBingo2026StatusV2')||'{}');
@@ -18,6 +18,14 @@ let viewStack=['groups'];
 let deferredInstallPrompt=null;
 let holdTimer=null;
 let holdFired=false;
+const recentUpdates=JSON.parse(localStorage.getItem('albumRecentUpdates')||'[]');
+
+// FIREBASE CLOUD SYNC
+let cloudUser=null;
+let cloudLoading=false;
+let cloudSaveTimer=null;
+let cloudLastLoadedUid=null;
+
 
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
@@ -38,7 +46,127 @@ function migrateState(old){
 function persist(){
   localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
   localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
+  localStorage.setItem('albumRecentUpdates',JSON.stringify(recentUpdates.slice(0,10)));
+  scheduleCloudSave();
 }
+
+
+async function getCloudApi(){
+  const firebase = await import('./firebase.js');
+  const firestore = await import('https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js');
+  return {
+    db: firebase.db,
+    doc: firestore.doc,
+    getDoc: firestore.getDoc,
+    setDoc: firestore.setDoc,
+    serverTimestamp: firestore.serverTimestamp
+  };
+}
+
+function currentAlbumPayload(){
+  return {
+    app:'album-copa2026',
+    version:7,
+    state:JSON.parse(JSON.stringify(state || {})),
+    daily:JSON.parse(JSON.stringify(daily || {})),
+    theme:localStorage.getItem('albumTheme') || 'light',
+    updatedAt:null
+  };
+}
+
+function scheduleCloudSave(){
+  if(!cloudUser || cloudLoading) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer=setTimeout(saveCloudAlbum,900);
+}
+
+async function saveCloudAlbum(){
+  if(!cloudUser || cloudLoading) return;
+
+  try{
+    const {db,doc,setDoc,serverTimestamp}=await getCloudApi();
+    const payload=currentAlbumPayload();
+    payload.updatedAt=serverTimestamp();
+
+    await setDoc(doc(db,'albums',cloudUser.uid),payload,{merge:true});
+
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada. Álbum salvo na nuvem.';
+  }catch(e){
+    console.error('Erro ao salvar álbum na nuvem:',e);
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada, mas não consegui salvar na nuvem.';
+  }
+}
+
+async function loadCloudAlbum(user){
+  if(!user) return;
+  if(cloudLastLoadedUid===user.uid) return;
+
+  cloudUser=user;
+  cloudLastLoadedUid=user.uid;
+  cloudLoading=true;
+
+  try{
+    const {db,doc,getDoc}=await getCloudApi();
+    const ref=doc(db,'albums',user.uid);
+    const snap=await getDoc(ref);
+
+    if(snap.exists()){
+      const data=snap.data() || {};
+
+      if(data.state && typeof data.state==='object'){
+        Object.keys(state).forEach(k=>delete state[k]);
+        Object.assign(state,data.state);
+        localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
+      }
+
+      if(data.daily && typeof data.daily==='object'){
+        Object.keys(daily).forEach(k=>delete daily[k]);
+        Object.assign(daily,data.daily);
+        localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
+      }
+
+      if(data.theme){
+        localStorage.setItem('albumTheme',data.theme);
+        document.body.classList.toggle('dark',data.theme==='dark');
+        const themeBtn=document.getElementById('themeBtn');
+        if(themeBtn) themeBtn.textContent=data.theme==='dark'?'☀️':'🌙';
+      }
+
+      render();
+
+      const status=document.getElementById('authStatus');
+      if(status) status.textContent='Álbum carregado da nuvem.';
+    }else{
+      await saveCloudAlbum();
+    }
+  }catch(e){
+    console.error('Erro ao carregar álbum da nuvem:',e);
+    const status=document.getElementById('authStatus');
+    if(status) status.textContent='Conta conectada, mas não consegui carregar a nuvem.';
+  }finally{
+    cloudLoading=false;
+  }
+}
+
+window.addEventListener('album-auth-changed',(event)=>{
+  const accountName=document.getElementById('accountNameLabel');
+  const pill=document.getElementById('accountOnlinePill');
+  const u=event.detail && event.detail.user ? event.detail.user : null;
+  if(accountName) accountName.textContent=u?(u.displayName||u.email||(u.isAnonymous?'Anônimo':'Colecionador')):'Colecionador';
+  if(pill){pill.textContent=u?'Online':'Offline';pill.style.background=u?'rgba(34,197,94,.28)':'rgba(239,68,68,.22)';}
+
+  const user=event.detail && event.detail.user ? event.detail.user : null;
+
+  if(user){
+    loadCloudAlbum(user);
+  }else{
+    cloudUser=null;
+    cloudLastLoadedUid=null;
+  }
+});
+
 
 function todayKey(){return new Date().toLocaleDateString('pt-BR')}
 
@@ -70,6 +198,7 @@ function setQty(id,q){
   if(old===0&&q>0)daily[todayKey()]=(daily[todayKey()]||0)+1;
   persist();
   render();
+  if(window.albumFirebaseUser) loadCloudAlbum(window.albumFirebaseUser);
 }
 
 function tapSticker(id){
@@ -167,20 +296,41 @@ function boardsForActive(){
   return GROUPS[activeGroup].map(([team,code])=>[team,code,activeGroup]);
 }
 
-function goView(v,push=true){
+function goView(v,push=true,scrollMode='section'){
   if(push&&currentView!==v)viewStack.push(v);
   currentView=v;
+
   $$('.app-view').forEach(el=>el.classList.remove('active'));
+
   const view=$('#view-'+v);
   if(view)view.classList.add('active');
+
   $$('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+
   render();
-  scrollTo({top:0,behavior:'smooth'});
+
+  setTimeout(()=>{
+    if(scrollMode==='top'){
+      window.scrollTo({top:0,behavior:'smooth'});
+      return;
+    }
+
+    const target=document.getElementById('view-'+v);
+
+    if(target){
+      const y=target.getBoundingClientRect().top+window.pageYOffset-18;
+      window.scrollTo({top:y,behavior:'smooth'});
+    }
+  },90);
+}
+
+function goHome(){
+  goView('groups',false,'top');
 }
 
 function goBack(){
-  if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}
-  else goView('groups',false);
+  if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false,'section')}
+  else goHome();
 }
 
 function renderDashboard(){
@@ -196,8 +346,18 @@ function renderDashboard(){
 }
 
 function groupSummaryHTML(g,teams){
-  if(g==='SPECIAL')return `<div class="group-codes"><span class="sig-code">FWC</span><span class="sig-code">CC</span></div>`;
-  return `<div class="group-codes">${teams.map(([team,code])=>`<span class="sig-code">${code}</span>`).join('')}</div>`;
+  if(g==='SPECIAL'){
+    return `<div class="group-letter-box">★</div>
+      <div class="group-teams">
+        <span>FWC</span>
+        <span>CC</span>
+      </div>`;
+  }
+
+  return `<div class="group-letter-box">${g}</div>
+    <div class="group-teams">
+      ${teams.map(([team,code])=>`<span>${code}</span>`).join('')}
+    </div>`;
 }
 
 function renderGroups(){
@@ -207,18 +367,24 @@ function renderGroups(){
   const normal=Object.entries(GROUPS).map(([g,teams])=>{
     const c=counts(groupItems(g));
     const p=c.total?Math.round(c.owned/c.total*100):0;
-    return `<button class="group-btn ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">
+    return `<button class="group-btn group-btn-with-teams ${activeGroup===g?'active':''} ${p===100?'gold':''}" onclick="selectGroup('${g}')">
       ${groupSummaryHTML(g,teams)}
-      <div class="group-info"><b>Grupo ${g}</b><small>✅ ${c.owned}/${c.total}<br>${p}%</small></div>
+      <div class="group-info">
+        <b>Grupo ${g}</b>
+        <small>✅ ${c.owned}/${c.total} · ${p}%</small>
+      </div>
     </button>`;
   }).join('');
 
   const sp=counts(groupItems('SPECIAL'));
   const pp=sp.total?Math.round(sp.owned/sp.total*100):0;
 
-  selector.innerHTML=normal+`<button class="group-btn ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">
+  selector.innerHTML=normal+`<button class="group-btn group-btn-with-teams ${activeGroup==='SPECIAL'?'active':''} ${pp===100?'gold':''}" onclick="selectGroup('SPECIAL')">
     ${groupSummaryHTML('SPECIAL',[])}
-    <div class="group-info"><b>⭐ Especiais</b><small>✅ ${sp.owned}/${sp.total}<br>${pp}%</small></div>
+    <div class="group-info">
+      <b>⭐ Especiais</b>
+      <small>✅ ${sp.owned}/${sp.total} · ${pp}%</small>
+    </div>
   </button>`;
 }
 
@@ -257,7 +423,7 @@ function renderBoards(){
           title="${x.code} ${x.number}">
           ${x.number}
         </button>
-        <span class="repeat-badge">${q>1?'x'+q:''}</span>
+        <span class="repeat-badge">${q>1?'x'+(q-1):''}</span>
       </div>`;
     }).join('');
 
@@ -303,7 +469,7 @@ function groupedList(status){
     const blocks=teams.map(([team,code])=>{
       const arr=teamItems(code).filter(x=>getStatus(x.id)===status);
       if(!arr.length)return '';
-      return `<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''}</span>`).join('')}</div></div>`;
+      return `<div class="list-team"><b>${team} <small>(${code})</small></b><div class="chips">${arr.map(x=>`<span class="code-chip">${x.code} ${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''}</span>`).join('')}</div></div>`;
     }).join('');
     return blocks?`<div class="list-group"><h3>${g==='SPECIAL'?'⭐ Especiais':'Grupo '+g}</h3>${blocks}</div>`:'';
   }).join('')||'<div class="notice">Nada por aqui.</div>';
@@ -338,7 +504,7 @@ function renderStats(){
 }
 
 function listTextByStatus(status){
-  return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+qty(x.id):''} - ${x.team}`).join('\n');
+  return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''} - ${x.team}`).join('\n');
 }
 function missingText(){return listTextByStatus('missing')||'Nenhuma faltando.'}
 function repeatText(){return listTextByStatus('repeat')||'Nenhuma repetida.'}
@@ -376,15 +542,63 @@ async function importBackup(e){
 }
 
 function setupInstall(){
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e});
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    deferredInstallPrompt=e;
+    const btn=$('#installBtn');
+    if(btn){
+      btn.disabled=false;
+      btn.textContent='Instalar';
+    }
+  });
+
   const btn=$('#installBtn');
-  if(btn)btn.addEventListener('click',async()=>{
+  const help=$('#installHelp');
+
+  if(btn)btn.addEventListener('click',async(ev)=>{
+    ev.preventDefault();
+
     if(deferredInstallPrompt){
       deferredInstallPrompt.prompt();
       await deferredInstallPrompt.userChoice;
       deferredInstallPrompt=null;
-    }else alert('No Android: Chrome → 3 pontinhos → Instalar aplicativo ou Adicionar à tela inicial.');
+      return;
+    }
+
+    if(help){
+      help.style.display='block';
+      help.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+
+    const ua=navigator.userAgent.toLowerCase();
+    const isIOS=/iphone|ipad|ipod/.test(ua);
+    const isAndroid=/android/.test(ua);
+
+    if(isIOS){
+      alert('No iPhone: abra no Safari, toque em Compartilhar e depois em Adicionar à Tela de Início.');
+    }else if(isAndroid){
+      alert('No Android: abra no Chrome com internet, toque nos 3 pontinhos ⋮ e escolha Instalar aplicativo ou Adicionar à tela inicial. Não use o botão de baixar página.');
+    }else{
+      alert('No PC: abra no Chrome ou Edge e clique no ícone de instalar na barra de endereço.');
+    }
   });
+}
+
+function renderRecentUpdates(){
+  const box=document.getElementById('recentUpdates');
+  if(!box)return;
+  if(!recentUpdates.length){
+    box.innerHTML='<div class="update-row"><span class="up-have">✅</span><div><b>Seu álbum está pronto</b><small>Marque figurinhas para ver seu histórico aqui.</small></div></div>';
+    return;
+  }
+  box.innerHTML=recentUpdates.slice(0,5).map(u=>{
+    const q=Number(u.qty||0);
+    const icon=q===0?'❌':q===1?'✅':'🔁';
+    const cls=q===0?'up-missing':q===1?'up-have':'up-repeat';
+    const action=q===0?'marcou como faltando':q===1?'marcou':'marcou como repetida x'+(q-1);
+    const time=new Date(u.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div class="update-row"><span class="${cls}">${icon}</span><div><b>Você ${action} <mark>${u.code} ${u.number}</mark></b><small>${time}</small></div></div>`;
+  }).join('');
 }
 
 function render(){
@@ -393,6 +607,7 @@ function render(){
   renderBoards();
   renderLists();
   renderStats();
+  renderRecentUpdates();
   persist();
 }
 
@@ -402,7 +617,7 @@ function render(){
 function buildHistoryBackup(){
   return {
     app: 'album-copa2026',
-    version: 6,
+    version: 7,
     createdAt: new Date().toISOString(),
     state: state || {},
     daily: daily || {},
@@ -468,6 +683,7 @@ async function loadHistoryFile(event){
 
     persist();
     render();
+    saveCloudAlbum();
     alert('Histórico carregado com sucesso!');
   }catch(e){
     alert('Erro ao carregar histórico. Verifique se o arquivo é o backup correto.');
@@ -508,14 +724,23 @@ function init(){
   if($('#exportBackupBtn'))$('#exportBackupBtn').addEventListener('click',exportBackup);
   if($('#importBackupInput'))$('#importBackupInput').addEventListener('change',importBackup);
   if($('#backBtn'))$('#backBtn').addEventListener('click',goBack);
+  if($('#floatingBackBtn'))$('#floatingBackBtn').addEventListener('click',goBack);
 
   $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{
-    goView(btn.dataset.view);
+    const view=btn.dataset.view;
+    const label=(btn.textContent||'').toLowerCase();
+
+    if(view==='groups' && label.includes('início')){
+      goHome();
+    }else{
+      goView(view,true,'section');
+    }
+
     $$('.bottom-nav button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
   }));
 
-  $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
+  $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view,true,'section')));
 
   setupInstall();
   setupHistoryButtons();
