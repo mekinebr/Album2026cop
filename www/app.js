@@ -157,6 +157,9 @@ window.addEventListener('album-auth-changed',(event)=>{
   if(accountName) accountName.textContent=u?(u.displayName||u.email||(u.isAnonymous?'Anônimo':'Colecionador')):'Colecionador';
   if(pill){pill.textContent=u?'Online':'Offline';pill.style.background=u?'rgba(34,197,94,.28)':'rgba(239,68,68,.22)';}
 
+  document.body.classList.toggle('logged-in', !!u);
+  document.body.classList.toggle('logged-out', !u);
+
   const user=event.detail && event.detail.user ? event.detail.user : null;
 
   if(user){
@@ -316,7 +319,6 @@ function goView(v,push=true,scrollMode='section'){
     }
 
     const target=document.getElementById('view-'+v);
-
     if(target){
       const y=target.getBoundingClientRect().top+window.pageYOffset-18;
       window.scrollTo({top:y,behavior:'smooth'});
@@ -329,8 +331,8 @@ function goHome(){
 }
 
 function goBack(){
-  if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false,'section')}
-  else goHome();
+  if(viewStack.length>1){viewStack.pop();goView(viewStack[viewStack.length-1],false)}
+  else goView('groups',false);
 }
 
 function renderDashboard(){
@@ -740,7 +742,7 @@ function init(){
     btn.classList.add('active');
   }));
 
-  $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view,true,'section')));
+  $$('.stat[data-view]').forEach(btn=>btn.addEventListener('click',()=>goView(btn.dataset.view)));
 
   setupInstall();
   setupHistoryButtons();
