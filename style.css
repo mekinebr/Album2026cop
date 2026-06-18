@@ -1481,3 +1481,264 @@ body.logged-in .anon-btn{
     border-radius:8px !important;
   }
 }
+
+
+
+/* ======================================================
+   AJUSTE FINO - PROGRESSO CENTRALIZADO + TROCAS MOBILE LIMPA
+====================================================== */
+
+/* Corrige porcentagem descentralizada no círculo do progresso */
+.circle-ring{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  gap:2px !important;
+}
+
+.circle-ring strong{
+  display:block !important;
+  line-height:1 !important;
+  margin:0 !important;
+  transform:none !important;
+}
+
+.circle-ring span{
+  display:block !important;
+  line-height:1 !important;
+  margin:0 !important;
+  transform:none !important;
+}
+
+/* Área de trocas mais limpa */
+.trade-online-grid{
+  align-items:stretch !important;
+}
+
+.trade-profile-card{
+  overflow:hidden !important;
+}
+
+.trade-profile-card h3{
+  line-height:1.15 !important;
+  margin-bottom:12px !important;
+}
+
+.trade-profile-card input,
+.trade-profile-card select{
+  margin-bottom:8px !important;
+}
+
+.trade-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+}
+
+.trade-actions button,
+.trade-actions a{
+  width:100% !important;
+  min-height:38px !important;
+  text-align:center !important;
+  line-height:1.1 !important;
+  white-space:normal !important;
+}
+
+.trade-status{
+  background:rgba(15,35,66,.55) !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:12px !important;
+  padding:10px !important;
+  line-height:1.25 !important;
+}
+
+.nearby-list{
+  display:grid !important;
+  gap:10px !important;
+}
+
+.person-card{
+  border:1px solid rgba(148,163,184,.25) !important;
+  background:rgba(15,35,66,.62) !important;
+  border-radius:16px !important;
+  padding:12px !important;
+}
+
+.person-head{
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  margin-bottom:8px !important;
+}
+
+.person-head h4{
+  margin:0 !important;
+  font-size:18px !important;
+  line-height:1.1 !important;
+}
+
+.person-head small{
+  color:var(--muted) !important;
+  font-size:12px !important;
+}
+
+.match-badges{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:6px !important;
+  margin:10px 0 !important;
+}
+
+.match-badges span{
+  display:block !important;
+  background:rgba(2,8,23,.35) !important;
+  border:1px solid rgba(148,163,184,.16) !important;
+  border-radius:10px !important;
+  padding:6px 7px !important;
+  font-size:12px !important;
+  line-height:1.15 !important;
+}
+
+.person-actions,
+.person-actions.three-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:8px !important;
+}
+
+.person-actions button,
+.person-actions a{
+  min-height:36px !important;
+  border-radius:10px !important;
+  font-size:12px !important;
+  line-height:1.1 !important;
+  text-align:center !important;
+  justify-content:center !important;
+}
+
+/* MOBILE: Trocas em uma coluna para não atropelar */
+@media(max-width:620px){
+
+  .circle-ring{
+    gap:1px !important;
+  }
+
+  .circle-ring strong{
+    font-size:18px !important;
+  }
+
+  .circle-ring span{
+    font-size:7px !important;
+  }
+
+  .trade-online-grid{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  .trade-profile-card,
+  .trade-map-box,
+  .chat-box{
+    padding:12px !important;
+    border-radius:16px !important;
+  }
+
+  .trade-profile-card h3{
+    font-size:20px !important;
+    margin-bottom:10px !important;
+  }
+
+  .trade-profile-card input,
+  .trade-profile-card select{
+    min-height:39px !important;
+    font-size:13px !important;
+    margin-bottom:7px !important;
+  }
+
+  .trade-actions{
+    grid-template-columns:1fr !important;
+    gap:7px !important;
+  }
+
+  .trade-actions button,
+  .trade-actions a,
+  #findNearbyBtn,
+  #saveTradeProfileBtn,
+  #publishTradeProfileBtn,
+  #deleteTradeProfileBtn{
+    min-height:40px !important;
+    font-size:14px !important;
+    border-radius:12px !important;
+    padding:8px 10px !important;
+    line-height:1.1 !important;
+  }
+
+  .muted-text{
+    display:block !important;
+    font-size:11px !important;
+    line-height:1.35 !important;
+    margin:8px 0 !important;
+  }
+
+  .trade-status{
+    font-size:14px !important;
+    line-height:1.25 !important;
+    margin-top:10px !important;
+  }
+
+  .trade-map-box h3{
+    font-size:20px !important;
+    margin-bottom:10px !important;
+  }
+
+  .person-card{
+    padding:12px !important;
+    border-radius:16px !important;
+  }
+
+  .person-head{
+    display:block !important;
+  }
+
+  .person-head h4{
+    font-size:18px !important;
+    margin-bottom:6px !important;
+  }
+
+  .person-head small{
+    display:block !important;
+    font-size:12px !important;
+  }
+
+  .match-badges{
+    grid-template-columns:1fr 1fr !important;
+    gap:6px !important;
+  }
+
+  .match-badges span{
+    font-size:11px !important;
+    padding:6px !important;
+    word-break:normal !important;
+  }
+
+  .person-actions,
+  .person-actions.three-actions{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .person-actions button,
+  .person-actions a{
+    font-size:12px !important;
+    min-height:36px !important;
+    padding:7px 8px !important;
+  }
+
+  .cross-summary,
+  .cross-lists,
+  .pair-row{
+    grid-template-columns:1fr !important;
+  }
+}
