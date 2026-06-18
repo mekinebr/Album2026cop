@@ -1,7 +1,1402 @@
 
+:root{
+  --bg:#020817;
+  --bg2:#06142d;
+  --card:#071a34;
+  --card2:#0b2447;
+  --text:#f8fafc;
+  --muted:#b7c4d8;
+  --line:rgba(148,163,184,.28);
+  --blue:#2563eb;
+  --green:#22c55e;
+  --red:#ef4444;
+  --yellow:#facc15;
+  --purple:#7c3aed;
+  --shadow:0 16px 38px rgba(0,0,0,.34);
+  --radius:20px;
+}
+
+*{box-sizing:border-box}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Inter,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 12% 0%,rgba(37,99,235,.30),transparent 34%),
+    radial-gradient(circle at 88% 8%,rgba(34,197,94,.20),transparent 34%),
+    linear-gradient(180deg,#020817,#06142d 45%,#020817);
+  padding-bottom:92px;
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  border:0;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+.app-shell{
+  max-width:920px;
+  margin:0 auto;
+  padding:10px 12px 92px;
+}
+
+/* TOPO */
+.hero-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.brand-area{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.trophy-icon{
+  font-size:38px;
+  filter:drop-shadow(0 10px 18px rgba(250,204,21,.25));
+}
+
+.hero-header h1{
+  margin:0;
+  font-size:27px;
+  line-height:1;
+  letter-spacing:.2px;
+}
+
+.hero-header h1 span{
+  color:var(--yellow);
+}
+
+.hero-header p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.history-actions,
+.hero-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.history-actions button,
+.history-upload{
+  min-height:36px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:7px 14px;
+  background:rgba(15,35,66,.95);
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow);
+}
+
+.history-upload{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  border-color:rgba(34,197,94,.55);
+}
+
+.history-upload input{
+  display:none;
+}
+
+/* GRID PRINCIPAL */
+.top-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+  align-items:start;
+}
+
+.account-card,
+.trade-hero-card,
+.progress-hero,
+.section-card,
+.updates-card,
+.super-banner,
+.help-card,
+.active-info{
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:linear-gradient(145deg,rgba(9,30,58,.98),rgba(3,18,38,.96));
+  box-shadow:var(--shadow);
+}
+
+/* CONTA */
+.account-card{
+  padding:12px;
+  border-color:rgba(34,211,238,.28);
+}
+
+.account-view{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.profile-avatar{
+  width:52px;
+  height:52px;
+  min-width:52px;
+  border-radius:50%;
+  border:2px solid #60fa7b;
+  background:rgba(34,197,94,.10);
+  box-shadow:0 0 0 5px rgba(34,197,94,.06);
+  display:grid;
+  place-items:center;
+  font-size:25px;
+}
+
+.account-info{
+  flex:1;
+  min-width:0;
+}
+
+.account-info strong{
+  display:block;
+  color:#72ff83;
+  font-size:11px;
+  letter-spacing:.3px;
+}
+
+.account-info h2{
+  margin:3px 0 2px;
+  font-size:18px;
+  line-height:1.05;
+  word-break:break-word;
+}
+
+.account-info p{
+  margin:0;
+  color:#cbd5e1;
+  font-size:10px;
+  line-height:1.2;
+}
+
+.online-pill{
+  display:inline-flex;
+  margin-top:5px;
+  padding:4px 8px;
+  border-radius:999px;
+  color:#fff;
+  background:rgba(34,197,94,.28);
+  border:1px solid rgba(34,197,94,.45);
+  font-size:10px;
+  font-weight:900;
+}
+
+.logged-user-box{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(34,197,94,.35);
+  background:rgba(34,197,94,.10);
+  border-radius:11px;
+  padding:6px 8px;
+  margin-bottom:8px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.danger-btn-small{
+  background:#ef4444!important;
+  color:#fff!important;
+  padding:5px 8px!important;
+  border-radius:8px!important;
+  font-size:10px!important;
+}
+
+/* login só aparece se não estiver logado */
+body.logged-in .login-card-grid,
+body.logged-in .login-panel,
+body.logged-in .google-btn,
+body.logged-in .anon-btn{
+  display:none!important;
+}
+
+.login-card-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.login-panel{
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:rgba(2,8,23,.28);
+  padding:8px;
+}
+
+.login-panel h3{
+  margin:0 0 6px;
+  font-size:12px;
+}
+
+.login-panel p{
+  margin:0 0 5px;
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.2;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  border:1px solid rgba(148,163,184,.32);
+  border-radius:10px;
+  background:rgba(2,8,23,.44);
+  color:#fff;
+  padding:7px 9px;
+  font-size:11px;
+  outline:0;
+}
+
+input::placeholder{
+  color:#9aa9bd;
+}
+
+select option{
+  color:#111;
+}
+
+.login-panel input{
+  min-height:30px;
+  margin-bottom:5px;
+}
+
+button,
+.file-btn{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:#fff;
+  border-radius:10px;
+  padding:7px 10px;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.login-panel button{
+  width:100%;
+  min-height:31px;
+  margin-top:5px;
+  font-size:11px;
+}
+
+.create-account-btn{
+  background:linear-gradient(135deg,#22c55e,#16a34a)!important;
+}
+
+.google-btn{
+  background:#fff!important;
+  color:#111827!important;
+}
+
+.anon-btn{
+  background:rgba(148,163,184,.10)!important;
+  border:1px solid var(--line)!important;
+  color:#fff!important;
+}
+
+/* TROCAS */
+.trade-hero-card{
+  padding:12px;
+  background:
+    radial-gradient(circle at 15% 15%,rgba(34,211,238,.16),transparent 26%),
+    linear-gradient(135deg,#18115a,#3b166e 55%,#0f172a);
+  border-color:rgba(168,85,247,.55);
+  max-height:170px;
+  overflow:hidden;
+}
+
+.trade-title{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:8px;
+}
+
+.trade-title span{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:rgba(34,211,238,.15);
+  display:grid;
+  place-items:center;
+  font-size:24px;
+}
+
+.trade-title h2{
+  margin:0;
+  color:#d8b4fe;
+  font-size:15px;
+  line-height:1.05;
+  letter-spacing:.3px;
+}
+
+.trade-title p{
+  margin:2px 0 0;
+  color:#e9d5ff;
+  font-size:10px;
+}
+
+.trade-mini-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(15,23,42,.48);
+  border-radius:10px;
+  overflow:hidden;
+  margin-bottom:8px;
+}
+
+.trade-mini-stats div{
+  padding:7px 3px;
+  text-align:center;
+  border-right:1px solid rgba(255,255,255,.09);
+}
+
+.trade-mini-stats div:last-child{
+  border-right:0;
+}
+
+.trade-mini-stats b{
+  display:block;
+  font-size:19px;
+  line-height:1;
+}
+
+.trade-mini-stats small{
+  color:#e9d5ff;
+  font-size:8px;
+}
+
+.open-trades-btn{
+  width:100%;
+  min-height:32px;
+  background:linear-gradient(135deg,#facc15,#f59e0b);
+  color:#111827;
+  border-radius:9px;
+  font-size:11px;
+  white-space:nowrap;
+}
+
+/* PROGRESSO */
+.progress-hero{
+  display:grid;
+  grid-template-columns:90px 1fr 1fr;
+  gap:9px;
+  align-items:center;
+  padding:10px 12px;
+  margin-bottom:9px;
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 15% 50%,rgba(34,197,94,.22),transparent 34%),
+    linear-gradient(135deg,rgba(5,80,49,.82),rgba(3,24,48,.94));
+  border-color:rgba(34,197,94,.45);
+}
+
+.circle-progress{
+  display:grid;
+  place-items:center;
+}
+
+.circle-ring{
+  width:76px;
+  height:76px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle,#041426 58%,transparent 60%),
+    conic-gradient(#22c55e 0deg 172deg,rgba(34,197,94,.18) 172deg 360deg);
+  box-shadow:0 0 0 6px rgba(34,197,94,.06);
+}
+
+.circle-ring strong{
+  font-size:24px;
+  line-height:1;
+}
+
+.circle-ring span{
+  display:block;
+  font-size:9px;
+  color:#fff;
+  margin-top:-12px;
+}
+
+.progress-main-info h2{
+  margin:0 0 5px;
+  color:#72ff83;
+  font-size:12px;
+}
+
+.progress{
+  height:8px;
+  background:rgba(255,255,255,.10);
+  border-radius:999px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.13);
+}
+
+.progress i{
+  display:block;
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#22c55e,#86efac);
+}
+
+.progress-main-info p{
+  margin:5px 0 6px;
+  color:#dbeafe;
+  font-size:10px;
+}
+
+.stats-link-btn{
+  min-height:29px;
+  padding:5px 9px;
+  font-size:10px;
+  background:rgba(15,23,42,.35)!important;
+  border:1px solid var(--line)!important;
+}
+
+.stats-grid-big{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+
+.stat-big{
+  min-height:55px;
+  padding:5px 7px;
+  border-radius:11px;
+  border:1px solid;
+  background:rgba(15,23,42,.42);
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+}
+
+.stat-big span{
+  font-size:18px;
+}
+
+.stat-big b{
+  font-size:21px;
+  line-height:1;
+}
+
+.stat-big small{
+  font-size:10px;
+  font-weight:800;
+}
+
+.stat-big.have{
+  background:linear-gradient(135deg,rgba(34,197,94,.38),rgba(7,89,46,.55));
+  border-color:#22c55e;
+}
+
+.stat-big.missing{
+  background:linear-gradient(135deg,rgba(239,68,68,.38),rgba(127,29,29,.55));
+  border-color:#ef4444;
+}
+
+.stat-big.repeat{
+  background:linear-gradient(135deg,rgba(250,204,21,.28),rgba(113,63,18,.55));
+  border-color:#eab308;
+}
+
+.stat-big.total{
+  background:linear-gradient(135deg,rgba(37,99,235,.36),rgba(30,64,175,.55));
+  border-color:#2563eb;
+}
+
+/* BUSCA E AJUDA */
+.search-row{
+  margin-bottom:8px;
+}
+
+.tools-card{
+  display:grid;
+  grid-template-columns:1fr 190px 72px;
+  gap:8px;
+  padding:0;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+}
+
+.tools-card input,
+.tools-card select,
+.tools-card button{
+  min-height:38px;
+  border-radius:11px;
+  font-size:11px;
+}
+
+.help-card{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:7px 9px;
+  margin-bottom:8px;
+  border-radius:13px;
+}
+
+.help-card b{
+  font-size:11px;
+}
+
+.help-card span{
+  background:rgba(148,163,184,.10);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:4px 7px;
+  font-size:10px;
+}
+
+/* VIEWS */
+.app-view{
+  display:none;
+}
+
+.app-view.active{
+  display:block;
+}
+
+.section-card,
+.updates-card{
+  padding:14px;
+  margin-bottom:14px;
+}
+
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.section-head h2{
+  margin:0;
+  font-size:16px;
+}
+
+.section-head p{
+  margin:4px 0 0;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.small-action{
+  padding:7px 10px!important;
+  background:rgba(15,23,42,.42)!important;
+  border:1px solid var(--line)!important;
+  font-size:11px!important;
+}
+
+/* GRUPOS */
+.group-selector{
+  display:grid!important;
+  grid-template-columns:repeat(4,1fr)!important;
+  gap:10px!important;
+}
+
+.group-btn{
+  min-height:76px!important;
+  padding:9px!important;
+  border-radius:13px!important;
+  display:grid!important;
+  grid-template-columns:42px 1fr!important;
+  align-items:center!important;
+  gap:8px!important;
+  background:rgba(15,35,66,.78)!important;
+  border:1px solid rgba(148,163,184,.24)!important;
+  color:#fff!important;
+  text-align:left!important;
+  box-shadow:none!important;
+}
+
+.group-btn.active{
+  background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(37,99,235,.20))!important;
+  border-color:#22c55e!important;
+}
+
+.group-letter-box{
+  width:40px;
+  height:40px;
+  display:grid;
+  place-items:center;
+  border-radius:11px;
+  background:rgba(34,197,94,.12);
+  color:#7ee787;
+  font-size:25px;
+  font-weight:1000;
+}
+
+.group-btn-with-teams{
+  grid-template-columns:42px 1fr!important;
+  grid-template-areas:
+    "letter info"
+    "teams teams"!important;
+}
+
+.group-btn-with-teams .group-letter-box{
+  grid-area:letter;
+}
+
+.group-info{
+  grid-area:info;
+}
+
+.group-info b{
+  display:block!important;
+  font-size:12px!important;
+}
+
+.group-info small{
+  display:block;
+  color:#dbeafe!important;
+  font-size:10px!important;
+  margin-top:2px;
+}
+
+.group-teams{
+  grid-area:teams;
+  display:grid!important;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px;
+  margin-top:3px;
+}
+
+.group-teams span{
+  color:#dbeafe;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(148,163,184,.16);
+  border-radius:7px;
+  padding:3px 4px;
+  text-align:center;
+  font-size:9px;
+  font-weight:900;
+}
+
+/* FIGURINHAS */
+.active-info{
+  padding:9px 10px;
+  margin-bottom:10px;
+  color:#cbd5e1;
+  font-size:11px;
+}
+
+.bingo-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.team-board{
+  background:linear-gradient(145deg,rgba(15,35,66,.96),rgba(3,18,38,.94));
+  border:1px solid var(--line);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:12px;
+}
+
+.team-board.complete{
+  border-color:#facc15;
+}
+
+.team-head{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.team-head h3{
+  margin:0;
+  font-size:16px;
+}
+
+.team-head small,
+.team-stats{
+  color:var(--muted);
+  font-size:10px;
+}
+
+.team-stats{
+  text-align:right;
+}
+
+.num-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:7px;
+}
+
+.num-wrap{
+  display:grid;
+  place-items:center;
+  gap:2px;
+}
+
+.num-btn{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:2px solid var(--line);
+  font-weight:1000;
+  font-size:12px;
+  padding:0;
+  color:#fff;
+}
+
+.num-btn.missing{
+  background:#ef4444;
+  border-color:#f87171;
+}
+
+.num-btn.have{
+  background:#22c55e;
+  border-color:#86efac;
+}
+
+.num-btn.repeat{
+  background:#facc15;
+  border-color:#fde047;
+  color:#111827;
+}
+
+.repeat-badge{
+  font-size:8px;
+  color:#facc15;
+  min-height:10px;
+}
+
+/* LISTAS / STATS / TROCAS */
+.list-panel,
+.stats-panel{
+  display:grid;
+  gap:10px;
+}
+
+.list-group,
+.stats-card,
+.trade-profile-card,
+.trade-map-box,
+.chat-box{
+  border:1px solid var(--line);
+  border-radius:15px;
+  padding:12px;
+  background:rgba(15,35,66,.62);
+}
+
+.list-team{
+  margin:7px 0;
+  padding:8px;
+  border-radius:12px;
+  background:rgba(2,8,23,.36);
+  border:1px solid var(--line);
+}
+
+.chips{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.code-chip{
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  background:rgba(148,163,184,.10);
+  border:1px solid var(--line);
+}
+
+.trade-online-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+/* BANNER */
+.super-banner{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  margin-bottom:16px;
+  color:#fff;
+  background:linear-gradient(135deg,rgba(5,150,105,.65),rgba(6,78,59,.72));
+  border-color:rgba(34,197,94,.55);
+}
+
+.tv-icon{
+  font-size:34px;
+}
+
+.super-banner b{
+  color:#fef08a;
+  font-size:14px;
+}
+
+.super-banner strong{
+  display:block;
+  color:#fff;
+  font-size:19px;
+}
+
+.super-banner small{
+  background:#22c55e;
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:900;
+}
+
+/* MENU */
+.bottom-nav-photo{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:50;
+  max-width:920px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:0;
+  padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+  background:rgba(7,26,52,.94);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--line);
+  border-bottom:0;
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -18px 42px rgba(0,0,0,.42);
+}
+
+.bottom-nav-photo button{
+  min-height:56px;
+  flex-direction:column;
+  background:transparent;
+  color:#cbd5e1;
+  border-radius:15px;
+  font-size:20px;
+  gap:3px;
+}
+
+.bottom-nav-photo button.active{
+  background:linear-gradient(135deg,rgba(34,197,94,.22),rgba(37,99,235,.12));
+  color:#fff;
+  box-shadow:inset 0 -3px 0 #22c55e;
+}
+
+.bottom-nav-photo span{
+  display:block;
+  font-size:10px;
+  font-weight:800;
+}
+
+.ghost{
+  background:rgba(148,163,184,.10)!important;
+  color:#fff!important;
+  border:1px solid var(--line)!important;
+}
+
+.notice,
+.muted-text{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.install-card,
+.install-help{
+  display:none!important;
+}
+
+.floating-back{
+  display:none;
+}
+
+/* MOBILE */
+@media(max-width:620px){
+
+  body{
+    padding-bottom:82px;
+  }
+
+  .app-shell{
+    padding:8px 8px 82px;
+  }
+
+  .hero-header{
+    display:grid;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .brand-area{
+    gap:8px;
+  }
+
+  .trophy-icon{
+    font-size:31px;
+  }
+
+  .hero-header h1{
+    font-size:21px;
+  }
+
+  .hero-header p{
+    font-size:12px;
+  }
+
+  .hero-actions,
+  .history-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .history-actions button,
+  .history-upload{
+    min-height:39px;
+    font-size:11px;
+  }
+
+  .top-grid{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+
+  .account-card,
+  .trade-hero-card{
+    padding:9px;
+    border-radius:15px;
+  }
+
+  .account-view{
+    display:grid;
+    grid-template-columns:40px 1fr;
+    gap:7px;
+    margin-bottom:6px;
+  }
+
+  .profile-avatar{
+    width:40px;
+    height:40px;
+    min-width:40px;
+    font-size:20px;
+  }
+
+  .account-info strong{
+    font-size:8px;
+  }
+
+  .account-info h2{
+    font-size:12px;
+  }
+
+  .account-info p{
+    font-size:8px;
+  }
+
+  .online-pill{
+    font-size:8px;
+    padding:2px 6px;
+  }
+
+  body.logged-in .logged-user-box{
+    display:flex!important;
+    padding:5px 7px;
+    font-size:8px;
+    border-radius:9px;
+  }
+
+  body.logged-in .danger-btn-small{
+    padding:4px 6px!important;
+    font-size:8px!important;
+  }
+
+  body.logged-out .login-card-grid{
+    grid-template-columns:1fr;
+    gap:5px;
+  }
+
+  body.logged-out .login-panel{
+    padding:6px;
+  }
+
+  body.logged-out .login-panel p,
+  body.logged-out .google-btn,
+  body.logged-out .anon-btn{
+    display:none!important;
+  }
+
+  body.logged-out .login-panel input{
+    min-height:28px;
+    padding:5px 7px;
+    font-size:10px;
+  }
+
+  body.logged-out .login-panel button{
+    min-height:29px;
+    font-size:10px;
+  }
+
+  .trade-hero-card{
+    max-height:132px;
+  }
+
+  .trade-title{
+    gap:6px;
+    margin-bottom:6px;
+  }
+
+  .trade-title span{
+    width:30px;
+    height:30px;
+    font-size:20px;
+  }
+
+  .trade-title h2{
+    font-size:11px;
+  }
+
+  .trade-title p{
+    font-size:8px;
+  }
+
+  .trade-mini-stats div{
+    padding:5px 2px;
+  }
+
+  .trade-mini-stats b{
+    font-size:16px;
+  }
+
+  .trade-mini-stats small{
+    font-size:7px;
+  }
+
+  .open-trades-btn{
+    min-height:30px;
+    font-size:9px;
+    white-space:nowrap;
+  }
+
+  .progress-hero{
+    grid-template-columns:58px 1fr;
+    gap:7px;
+    padding:8px;
+    border-radius:14px;
+  }
+
+  .circle-ring{
+    width:54px;
+    height:54px;
+  }
+
+  .circle-ring strong{
+    font-size:17px;
+  }
+
+  .circle-ring span{
+    font-size:7px;
+    margin-top:-9px;
+  }
+
+  .progress-main-info h2{
+    font-size:10px;
+    margin-bottom:4px;
+  }
+
+  .progress{
+    height:7px;
+  }
+
+  .progress-main-info p{
+    font-size:8px;
+    margin:4px 0;
+  }
+
+  .stats-link-btn{
+    display:none!important;
+  }
+
+  .stats-grid-big{
+    grid-column:1/-1;
+    grid-template-columns:repeat(4,1fr);
+    gap:4px;
+  }
+
+  .stat-big{
+    min-height:43px;
+    padding:4px 2px;
+    border-radius:10px;
+    flex-direction:column;
+    text-align:center;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .stat-big span{
+    font-size:13px;
+  }
+
+  .stat-big b{
+    font-size:15px;
+    margin:0;
+  }
+
+  .stat-big small{
+    font-size:7px;
+    margin:0;
+  }
+
+  .tools-card{
+    grid-template-columns:1fr 110px;
+    gap:6px;
+  }
+
+  .tools-card button{
+    display:none;
+  }
+
+  .tools-card input,
+  .tools-card select{
+    min-height:36px;
+    font-size:10px;
+  }
+
+  .group-selector{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+
+  .group-btn{
+    min-height:82px!important;
+    padding:8px!important;
+  }
+
+  .bingo-grid{
+    grid-template-columns:1fr;
+  }
+
+  .team-board{
+    padding:10px;
+  }
+
+  .num-grid{
+    gap:6px;
+  }
+
+  .num-btn{
+    width:37px;
+    height:37px;
+  }
+
+  .super-banner{
+    grid-template-columns:auto 1fr;
+    padding:10px;
+  }
+
+  .super-banner small{
+    display:none;
+  }
+
+  .bottom-nav-photo{
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav-photo button{
+    min-height:50px;
+    font-size:18px;
+    border-radius:12px;
+  }
+
+  .bottom-nav-photo span{
+    font-size:8px;
+  }
+}
+
+@media(max-width:390px){
+  .top-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .group-selector{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+
+
+
 /* ======================================================
-   ANÚNCIO SUPER MTV NO TOPO
-   Melhor posição: abaixo do cabeçalho e antes de Minha Conta/Trocas
+   FIX FINAL INTEGRADO - TROCAS MOBILE + BANNER MTV
+====================================================== */
+
+.open-trades-btn{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+.super-banner,
+.ad-banner{
+  max-width:920px !important;
+  margin:0 auto 10px !important;
+  padding:10px 14px !important;
+  border-radius:16px !important;
+  display:grid !important;
+  grid-template-columns:auto 1fr auto !important;
+  align-items:center !important;
+  gap:10px !important;
+  background:linear-gradient(135deg,rgba(37,99,235,.58),rgba(34,197,94,.58)) !important;
+  border:1px solid rgba(34,197,94,.42) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.24) !important;
+  color:#fff !important;
+}
+
+.super-banner .tv-icon,
+.ad-banner .tv-icon{
+  font-size:28px !important;
+}
+
+.super-banner b,
+.ad-banner b{
+  display:block !important;
+  color:#fef08a !important;
+  font-size:13px !important;
+  line-height:1.1 !important;
+}
+
+.super-banner strong,
+.ad-banner strong,
+.ad-banner span{
+  display:block !important;
+  color:#fff !important;
+  font-size:16px !important;
+  font-weight:1000 !important;
+  line-height:1.15 !important;
+}
+
+.super-banner small,
+.ad-banner small{
+  background:#22c55e !important;
+  color:#fff !important;
+  padding:7px 11px !important;
+  border-radius:10px !important;
+  font-size:10px !important;
+  font-weight:900 !important;
+  white-space:nowrap !important;
+}
+
+@media(max-width:620px){
+
+  .trade-hero-card{
+    padding-bottom:8px !important;
+    max-height:128px !important;
+    overflow:hidden !important;
+  }
+
+  .open-trades-btn{
+    min-height:28px !important;
+    height:28px !important;
+    padding:4px 5px !important;
+    font-size:8.5px !important;
+    line-height:1 !important;
+    border-radius:8px !important;
+    margin-top:0 !important;
+  }
+
+  .trade-mini-stats{
+    margin-bottom:6px !important;
+  }
+
+  .trade-mini-stats div{
+    padding:4px 2px !important;
+  }
+
+  .trade-mini-stats b{
+    font-size:14px !important;
+  }
+
+  .trade-mini-stats small{
+    font-size:6.5px !important;
+  }
+
+  .super-banner,
+  .ad-banner{
+    margin:0 0 8px !important;
+    padding:8px 9px !important;
+    border-radius:14px !important;
+    grid-template-columns:28px 1fr !important;
+    gap:7px !important;
+  }
+
+  .super-banner .tv-icon,
+  .ad-banner .tv-icon{
+    font-size:24px !important;
+  }
+
+  .super-banner b,
+  .ad-banner b{
+    font-size:10px !important;
+  }
+
+  .super-banner strong,
+  .ad-banner strong,
+  .ad-banner span{
+    font-size:13px !important;
+  }
+
+  .super-banner small,
+  .ad-banner small{
+    display:none !important;
+  }
+}
+
+
+
+/* ======================================================
+   ANÚNCIO SUPER MTV NO TOPO - INTEGRADO
 ====================================================== */
 
 .top-super-mtv,
@@ -15,23 +1410,18 @@
   align-items:center !important;
   gap:10px !important;
   color:#fff !important;
-  background:
-    linear-gradient(135deg,rgba(37,99,235,.82),rgba(34,197,94,.78)) !important;
+  background:linear-gradient(135deg,rgba(37,99,235,.82),rgba(34,197,94,.78)) !important;
   border:1px solid rgba(34,197,94,.50) !important;
   box-shadow:0 12px 28px rgba(0,0,0,.25) !important;
 }
 
-.top-super-mtv .tv-icon{
-  font-size:28px !important;
-}
-
+.top-super-mtv .tv-icon{font-size:28px !important}
 .top-super-mtv b{
   display:block !important;
   color:#fef08a !important;
   font-size:12px !important;
   line-height:1.05 !important;
 }
-
 .top-super-mtv strong{
   display:block !important;
   color:#fff !important;
@@ -39,7 +1429,6 @@
   font-weight:1000 !important;
   line-height:1.15 !important;
 }
-
 .top-super-mtv small{
   background:rgba(255,255,255,.18) !important;
   color:#fff !important;
@@ -49,10 +1438,24 @@
   font-weight:900 !important;
   white-space:nowrap !important;
 }
+.top-super-mtv + .top-grid{margin-top:0 !important}
 
-/* aproxima o topo dos cards */
-.top-super-mtv + .top-grid{
-  margin-top:0 !important;
+/* Botão trocas sem sair do roxo */
+.open-trades-btn{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+/* Login some quando conectado */
+body.logged-in .login-card-grid,
+body.logged-in .login-panel,
+body.logged-in .google-btn,
+body.logged-in .anon-btn{
+  display:none !important;
 }
 
 @media(max-width:620px){
@@ -64,20 +1467,17 @@
     grid-template-columns:28px 1fr !important;
     gap:7px !important;
   }
+  .top-super-mtv .tv-icon{font-size:23px !important}
+  .top-super-mtv b{font-size:9px !important}
+  .top-super-mtv strong{font-size:12px !important}
+  .top-super-mtv small{display:none !important}
 
-  .top-super-mtv .tv-icon{
-    font-size:23px !important;
-  }
-
-  .top-super-mtv b{
-    font-size:9px !important;
-  }
-
-  .top-super-mtv strong{
-    font-size:12px !important;
-  }
-
-  .top-super-mtv small{
-    display:none !important;
+  .open-trades-btn{
+    min-height:28px !important;
+    height:28px !important;
+    padding:4px 5px !important;
+    font-size:8.5px !important;
+    line-height:1 !important;
+    border-radius:8px !important;
   }
 }
