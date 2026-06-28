@@ -253,6 +253,12 @@ function parseSearch(){
     return {type:'exact',code,number};
   }
 
+  // Quando digitar só a sigla, prioriza a sigla exata.
+  // Ex.: PAN abre Panamá, não Espanha.
+  if(/^[A-Z]{2,3}$/.test(compact) && stickers.some(x=>String(x.code).toUpperCase()===compact)){
+    return {type:'code',code:compact};
+  }
+
   return {type:'text',text:norm(raw)};
 }
 
@@ -266,6 +272,10 @@ function visibleSticker(x){
 
   if(s.type==='exact'){
     return String(x.code).toUpperCase()===s.code && String(x.number)===s.number;
+  }
+
+  if(s.type==='code'){
+    return String(x.code).toUpperCase()===s.code;
   }
 
   return norm(x.team).includes(s.text)||norm(x.code).includes(s.text)||norm(x.groupName).includes(s.text);
@@ -288,6 +298,10 @@ function teamMatchesSearch(code,team){
 
   if(s.type==='exact'){
     return String(code).toUpperCase()===s.code && teamItems(code).some(x=>String(x.number)===s.number);
+  }
+
+  if(s.type==='code'){
+    return String(code).toUpperCase()===s.code;
   }
 
   return norm(code).includes(s.text)||norm(team).includes(s.text)||teamItems(code).some(visibleSticker);
@@ -505,13 +519,55 @@ function renderStats(){
   <div class="stats-card"><h3>Coladas por dia</h3><div class="day-bars">${days.length?days.map(([d,n])=>`<div class="day-row"><span>${d}</span><div class="day-bar"><i style="width:${Math.round(n/maxDay*100)}%"></i></div><b>${n}</b></div>`).join(''):'<p class="muted">Ainda nenhuma figurinha marcada como tenho/repetida.</p>'}</div></div>`;
 }
 
-function listTextByStatus(status){
-  return stickers.filter(x=>getStatus(x.id)===status).map(x=>`${x.code} ${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''} - ${x.team}`).join('\n');
+const SITE_LINK='https://album2026cop.vercel.app';
+
+const FLAG_BY_CODE={
+  MEX:'🇲🇽',RSA:'🇿🇦',KOR:'🇰🇷',CZE:'🇨🇿',
+  CAN:'🇨🇦',BIH:'🇧🇦',QAT:'🇶🇦',SUI:'🇨🇭',
+  BRA:'🇧🇷',MAR:'🇲🇦',HAI:'🇭🇹',SCO:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  USA:'🇺🇸',PAR:'🇵🇾',AUS:'🇦🇺',TUR:'🇹🇷',
+  GER:'🇩🇪',CUW:'🇨🇼',CIV:'🇨🇮',ECU:'🇪🇨',
+  NED:'🇳🇱',JPN:'🇯🇵',SWE:'🇸🇪',TUN:'🇹🇳',
+  BEL:'🇧🇪',EGY:'🇪🇬',IRN:'🇮🇷',NZL:'🇳🇿',
+  ESP:'🇪🇸',CPV:'🇨🇻',KSA:'🇸🇦',URU:'🇺🇾',
+  FRA:'🇫🇷',SEN:'🇸🇳',IRQ:'🇮🇶',NOR:'🇳🇴',
+  ARG:'🇦🇷',ALG:'🇩🇿',AUT:'🇦🇹',JOR:'🇯🇴',
+  POR:'🇵🇹',COD:'🇨🇩',UZB:'🇺🇿',COL:'🇨🇴',
+  ENG:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',CRO:'🇭🇷',GHA:'🇬🇭',PAN:'🇵🇦',
+  FWC:'🏆',CC:'🥤'
+};
+
+function flag(code){
+  return FLAG_BY_CODE[String(code||'').toUpperCase()]||'🏳️';
 }
+
+function listTextByStatus(status){
+  const byCode={};
+
+  stickers.filter(x=>getStatus(x.id)===status).forEach(x=>{
+    byCode[x.code]=byCode[x.code]||{team:x.team,code:x.code,items:[]};
+    byCode[x.code].items.push(`${x.number}${qty(x.id)>1?' x'+(qty(x.id)-1):''}`);
+  });
+
+  return Object.values(byCode).map(g=>{
+    return `${flag(g.code)} ${g.team} (${g.code})\n${g.items.map(n=>`${g.code} ${n}`).join(', ')}`;
+  }).join('\n\n');
+}
+
 function missingText(){return listTextByStatus('missing')||'Nenhuma faltando.'}
 function repeatText(){return listTextByStatus('repeat')||'Nenhuma repetida.'}
-function missingShareText(){return `🏆 Álbum Copa 2026\n\n❌ ME FALTAM\n\n${missingText()}`}
-function repeatShareText(){return `🏆 Álbum Copa 2026\n\n🔁 REPETIDAS\n\n${repeatText()}`}
+
+function shareFooter(){
+  return `\n\n📲 Organize seu Álbum Copa 2026 aqui:\n${SITE_LINK}`;
+}
+
+function missingShareText(){
+  return `🏆 Álbum Copa 2026\n\n❌ FIGURINHAS QUE ME FALTAM\n\n${missingText()}${shareFooter()}`;
+}
+
+function repeatShareText(){
+  return `🏆 Álbum Copa 2026\n\n🔁 MINHAS FIGURINHAS REPETIDAS\n\n${repeatText()}${shareFooter()}`;
+}
 
 async function copyText(t,msg){try{await navigator.clipboard.writeText(t);alert(msg)}catch(e){alert('Não consegui copiar.')}}
 function shareWhatsText(t){window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
