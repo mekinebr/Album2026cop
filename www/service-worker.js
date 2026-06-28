@@ -1,4 +1,4 @@
-const CACHE = 'album-copa2026-progresso-trocas-ajuste1';
+const CACHE = 'album-copa2026-whatsapp-bandeiras-pan1';
 const ASSETS = ['./','./index.html','./style.css','./app.js','./firebase.js','./firebase-trades.js','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install', event => { self.skipWaiting(); event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).catch(() => {})); });
 self.addEventListener('activate', event => { event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(key => key !== CACHE ? caches.delete(key) : null))).then(() => self.clients.claim())); });
