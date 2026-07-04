@@ -25,6 +25,8 @@ let cloudUser=null;
 let cloudLoading=false;
 let cloudSaveTimer=null;
 let cloudLastLoadedUid=null;
+let localChangeVersion=Number(localStorage.getItem('albumLocalChangeVersion')||'0');
+let cloudLoadStartedAt=0;
 
 
 const $=s=>document.querySelector(s);
@@ -44,6 +46,8 @@ function migrateState(old){
 }
 
 function persist(){
+  localChangeVersion++;
+  localStorage.setItem('albumLocalChangeVersion',String(localChangeVersion));
   localStorage.setItem('albumBingo2026StatusV5',JSON.stringify(state));
   localStorage.setItem('albumBingo2026Daily',JSON.stringify(daily));
   localStorage.setItem('albumRecentUpdates',JSON.stringify(recentUpdates.slice(0,10)));
@@ -88,7 +92,7 @@ async function saveCloudAlbum(){
     const payload=currentAlbumPayload();
     payload.updatedAt=serverTimestamp();
 
-    await setDoc(doc(db,'albums',cloudUser.uid),payload,{merge:true});
+    await setDoc(doc(db,'albums',cloudUser.uid),payload);
 
     const status=document.getElementById('authStatus');
     if(status) status.textContent='Conta conectada. Álbum salvo na nuvem.';
@@ -106,6 +110,7 @@ async function loadCloudAlbum(user){
   cloudUser=user;
   cloudLastLoadedUid=user.uid;
   cloudLoading=true;
+  cloudLoadStartedAt=localChangeVersion;
 
   try{
     const {db,doc,getDoc}=await getCloudApi();
@@ -114,6 +119,13 @@ async function loadCloudAlbum(user){
 
     if(snap.exists()){
       const data=snap.data() || {};
+
+      // Segurança: se o usuário mexeu no álbum enquanto a nuvem carregava,
+      // não sobrescreve a última ação local com dado antigo da nuvem.
+      if(localChangeVersion!==cloudLoadStartedAt){
+        await saveCloudAlbum();
+        return;
+      }
 
       if(data.state && typeof data.state==='object'){
         Object.keys(state).forEach(k=>delete state[k]);
@@ -197,11 +209,16 @@ function getStatus(id){const q=qty(id);return q===0?'missing':q===1?'have':'repe
 
 function setQty(id,q){
   const old=qty(id);
-  if(q<=0)delete state[id];else state[id]=q;
+
+  // Última ação sempre vence:
+  // se zerar, apaga local e também será apagado da nuvem no próximo save.
+  if(q<=0)delete state[id];
+  else state[id]=q;
+
   if(old===0&&q>0)daily[todayKey()]=(daily[todayKey()]||0)+1;
+
   persist();
   render();
-  if(window.albumFirebaseUser) loadCloudAlbum(window.albumFirebaseUser);
 }
 
 function tapSticker(id){
